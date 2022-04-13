@@ -1,5 +1,5 @@
 
-import { Asset, Contract,Contracts, Name, requireAuth, Symbol, TableStore,ExtendedSymbol } from 'proton-tsc';
+import { Asset, Contract,Contracts, Name, requireAuth, Symbol, TableStore } from 'proton-tsc';
 
 import { Items } from './items.table'
 
@@ -17,7 +17,6 @@ export class fivefhc extends Contracts.Allow.AllowContract {
     requireAuth(this.receiver);
     const name:Name = new Name()
     const item:Items = new Items(name,978645123,owner,owner,rl_multiplier);
-    Contracts.AtomicAssets.sendMintAsset(this.receiver,this.receiver,Name.fromString('123azer'),Name.fromString('123azer'),1234,owner,[],[],[])
     this.itemTable.set(item,this.receiver);
     
 
