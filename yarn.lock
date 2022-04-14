@@ -179,10 +179,10 @@ as-bignum@^0.2.18:
   resolved "https://registry.yarnpkg.com/as-bignum/-/as-bignum-0.2.18.tgz#61ed4dd07d4a62107bde227fdb4370190217bf0b"
   integrity sha512-5LODrOr7wvS643oh7PHfyRtbBO9vCcU69vNNvrqh5yovrApM9nRHDeT5XcqnaSI8TqK9ZhN12qhZnq4rdIGcwQ==
 
-as-chain@0.0.34:
-  version "0.0.34"
-  resolved "https://registry.yarnpkg.com/as-chain/-/as-chain-0.0.34.tgz#04a884a664131abdb2e9fb243aa16cf27a3ec8cc"
-  integrity sha512-x+60XaQtZlPRzqbVPDtlaHnUyBiIGbXXqYS183MSMNzLJPrXbp38aRODY4TDPY07Q39CUDB8GjVbqlJHPyF/Bg==
+as-chain@0.0.35:
+  version "0.0.35"
+  resolved "https://registry.yarnpkg.com/as-chain/-/as-chain-0.0.35.tgz#15712571ee0ac6819f95fa4d3650f71c4089a467"
+  integrity sha512-QbN36q0btRAjLfUzJkYbMJMoOKZPXRAa7f5tGpAzr4weZxXxmGdCOFlqymQLyjvM598AYeKE4ejQ42a/Os7ETg==
   dependencies:
     "@assemblyscript/loader" "^0.19.22"
     as-bignum "^0.2.18"
@@ -1118,22 +1118,22 @@ pify@^3.0.0:
   resolved "https://registry.yarnpkg.com/pify/-/pify-3.0.0.tgz#e5a4acd2c101fdf3d9a4d07f0dbc4db49dd28176"
   integrity sha1-5aSs0sEB/fPZpNB/DbxNtJ3SgXY=
 
-proton-asc@^0.2.78:
-  version "0.2.79"
-  resolved "https://registry.yarnpkg.com/proton-asc/-/proton-asc-0.2.79.tgz#d8a64adcce1695cf9f1d2d258cc5630b61b0b479"
-  integrity sha512-oR1zTxbaU2T4D5S7/Yl9yY8CHUhbZ8MbRETydDCwTIAqrHkWl/B5QwjAZNy7VLPqH4rVuIlzMMQNJn9UYIj7Yw==
+proton-asc@^0.2.80:
+  version "0.2.82"
+  resolved "https://registry.yarnpkg.com/proton-asc/-/proton-asc-0.2.82.tgz#f45ac23cf6bbf34b62e4d1c8268104fce18a8a16"
+  integrity sha512-mGpJnVyn/COE7a9s8wja+ph+ZK6HlKP20AH8YqQJgbN+44nzsaO6tn67PQWXe/N7qdbv4JEHraJwvh/x6kUGMw==
   dependencies:
-    as-chain "0.0.34"
+    as-chain "0.0.35"
     assemblyscript "0.18"
     handlebars "4.7.7"
     ts-dedent "^2.2.0"
 
-proton-tsc@latest:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/proton-tsc/-/proton-tsc-0.1.2.tgz#421776b5c62cb137f3100abcc7c6209fe78a4761"
-  integrity sha512-1wrjoh2zu8G9IRpIESa1u3I3G+V4xOfotW/QTXeTnqnA16GFUgMOMzwa9xIdw/AMfIumXm80beQpfTEDxVfx7Q==
+proton-tsc@^0.1.4:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/proton-tsc/-/proton-tsc-0.1.5.tgz#565854f858dc2d4b6fd32e3f257c101340d48a08"
+  integrity sha512-JQieCkROzZwbxM553hxKnNMkYDLjkaYdDFXOp6uO3o69RiDIRl7HWI7A7d9N0Ui0DVgjS4ZbrM3zxKjZFIprdg==
   dependencies:
-    proton-asc "^0.2.78"
+    proton-asc "^0.2.80"
 
 randombytes@^2.1.0:
   version "2.1.0"
