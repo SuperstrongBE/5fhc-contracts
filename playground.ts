@@ -8,11 +8,13 @@ async function wait(ms: number) {
 
 const main = async () => {
   const blockchain = new Blockchain();
-  const contract = blockchain.createContract('fivefhc', 'target/fivefhc.contract');
+  const fivefhc = blockchain.createContract('fivefhc', 'target/fivefhc.contract',true);
+  const atomicAsset = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets',true);
   await wait(0);
 
   // Put you actions calls here
-  await contract.actions.mintitem(['johnson',7]).send('fivefhc@active')
+  await atomicAsset.actions.createcol(['fivefhc','coolcool1234',true,['fivefhc'],['fivefhc'],0.15,[]]).send('fivefhc@active')
+  await fivefhc.actions.mintitem(['johnson',7]).send('fivefhc@active')
 }
 
 main()
