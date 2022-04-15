@@ -11,7 +11,12 @@ const main = async () => {
 
   const fivefhc = blockchain.createContract('fivefhc', 'target/fivefhc.contract',true);
   const atomicAsset = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets',true);
-  await wait(0);
+  const minterAccount = blockchain.createAccount('johnson')
+  const collName:string = 'collection12';
+  const schemaName:string = 'collection12';
+
+  console.log(minterAccount.name.toString())
+  await wait(5000);
 
   // Initialize atomicassets
   await atomicAsset.actions.init().send()
@@ -25,8 +30,19 @@ const main = async () => {
   ]).send()
 
   // Put you actions calls here
-  await atomicAsset.actions.createcol(['fivefhc','coolcool1234',true,['fivefhc'],['fivefhc'],0.15,[]]).send('fivefhc@active')
-  await fivefhc.actions.mintitem(['johnson',7]).send('fivefhc@active')
+  await atomicAsset.actions.createcol(['fivefhc',collName,true,['fivefhc'],['fivefhc'],0.15,[]]).send('fivefhc@active')
+  await atomicAsset.actions.createschema(['fivefhc',collName,schemaName,[
+    { "name": "name", "type": "string" },
+    { "name": "img", "type": "ipfs" },
+    { "name": "description", "type": "string" },
+    { "name": "url", "type": "string" },
+    { "name": "rl_multiplyer", "type": "uint32" },
+    { "name": "og_owner", "type": "string" }
+  ]]).send('fivefhc@active');
+
+  await wait(5000);
+
+  await fivefhc.actions.mintitem(['johnson',7,collName,schemaName]).send('fivefhc@active')
 }
 
 main()
