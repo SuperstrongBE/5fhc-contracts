@@ -1,4 +1,6 @@
 import { Blockchain } from "@proton/vert";
+import { CollectionName } from "./fivefhc.constant";
+
 
 async function wait(ms: number) {
   return new Promise(resolve => {
@@ -9,14 +11,15 @@ async function wait(ms: number) {
 const main = async () => {
   const blockchain = new Blockchain();
 
-  const fivefhc = blockchain.createContract('fivefhc', 'target/fivefhc.contract',true);
+  const fivefhcContract = blockchain.createContract('fivefhc', 'target/fivefhc.contract',true);
   const atomicAsset = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets',true);
-  const collName:string = 'coolcool1234';
-  const schemaName:string = 'coolcool1234';
-  const templateName:string = 'mycool5fhcha'
+  const johnsonAccount = blockchain.createAccount('johnson')
+  const minterAccount = blockchain.createAccount('johnson')
+  const collName:string = 'collection12';
+  const schemaName:string = 'collection12';
 
-
-  await wait(0);
+  console.log(minterAccount.name.toString())
+  await wait(5000);
 
   // Initialize atomicassets
   await atomicAsset.actions.init().send()
@@ -30,18 +33,19 @@ const main = async () => {
   ]).send()
 
   // Put you actions calls here
-  await atomicAsset.actions.createcol(['fivefhc',collName,true,['fivefhc'],['fivefhc'],0.15,[]]).send('fivefhc@active')
-  await atomicAsset.actions.createschema(['fivefhc',collName,schemaName,[
+  await atomicAsset.actions.createcol(['fivefhc',CollectionName.toString(),true,['fivefhc'],['fivefhc'],0.15,[]]).send('fivefhc@active')
+  await atomicAsset.actions.createschema(['fivefhc',CollectionName.toString(),CollectionName.toString(),[
     { "name": "name", "type": "string" },
     { "name": "img", "type": "ipfs" },
     { "name": "description", "type": "string" },
-    { "name": "url", "type": "string" }
+    { "name": "url", "type": "string" },
+    { "name": "rl_multiplyer", "type": "uint32" },
+    { "name": "og_owner", "type": "string" }
   ]]).send('fivefhc@active');
-  const ct = await atomicAsset.actions.createtempl(['fivefhc',collName,schemaName,false,true,10,[]]).send('fivefhc@active');
-  console.log ('ct>');
-  console.log (atomicAsset.bc.console);
-  console.log ('<ct');
-  await fivefhc.actions.mintitem(['johnson',7,collName,schemaName]).send('fivefhc@active')
+
+  await wait(5000);
+
+  await fivefhcContract.actions.mintitem(['johnson',7,CollectionName.toString(),CollectionName.toString()]).send('fivefhc@active')
 }
 
 main()

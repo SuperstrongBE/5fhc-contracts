@@ -7,7 +7,7 @@
     "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts"
   },
   "dependencies": {
-    "proton-tsc": "^0.1.5"
+    "proton-tsc": "^0.1.23"
   },
   "engines": {
     "npm": ">=7.0.0",
