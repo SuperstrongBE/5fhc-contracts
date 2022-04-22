@@ -2,7 +2,7 @@ import { Name, Table, TableStore } from "proton-tsc";
 
 
 @table("items")
-class ItemsTable extends Table {
+export class Items extends Table {
 
     constructor(
         public item_name:Name = new Name(),
@@ -60,14 +60,7 @@ class ItemsTable extends Table {
 
     }
 
-    static GetTable (code:Name):TableStore<Items>{
-
+    static getTable (code:Name):TableStore<Items>{
         return new TableStore<Items>(code,code,Name.fromString('items'))
-
     }
-
-
-
 }
-
-export class Items extends ItemsTable {}

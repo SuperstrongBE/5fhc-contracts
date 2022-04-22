@@ -11,7 +11,7 @@ export class fivefhc extends AllowContract {
   private static FULL_PRICE:      Asset = new Asset(10000000,new Symbol('FOOBAR',6));
   private static REDUCED_PRICE:   Asset = new Asset(7000000,new Symbol('FOOBAR',6));
 
-  private itemTable:              TableStore<Items> = Items.GetTable(this.receiver);
+  private itemTable:              TableStore<Items> = Items.getTable(this.receiver);
   private templateTable:          TableStore<Templates> =  Templates.getTable(Name.fromString('atomicassets'),Name.fromString(CollectionName))
   private schemaTable:            TableStore<Schemas> =  Schemas.getTable(Name.fromString('atomicassets'),Name.fromString(SchemaName))
   
@@ -36,16 +36,23 @@ export class fivefhc extends AllowContract {
   } 
 
   @action("logmint",notify)
-  logmint():void{
-
-    const inlineAction = unpackActionData<MintAsset>();
-    
+  logmint(
+    assetId: u64,
+    authorizedMinter: Name,
+    collectionName: Name,
+    schemaName: Name,
+    templateId: i32,
+    newAssetOwner: Name,
+    immutableData: AtomicAttribute[],
+    mutableData: AtomicAttribute[],
+    backedTokens: Asset[],
+    immutableTemplateData: AtomicAttribute[],
+  ):void{
     if (!this.templateTable.isEmpty()){
-      
-      if (inlineAction.template_id){
-        print(`has last template -> ${inlineAction.template_id.toString()}`);
-        const schema = this.schemaTable.requireGet(inlineAction.schema_name.N,'No schema found');
-        const templateData = this.templateTable.requireGet(inlineAction.template_id,`fuck there is no templates for template_id ${inlineAction.template_id}  `);
+      if (templateId){
+        print(`has last template -> ${templateId.toString()}`);
+        const schema = this.schemaTable.requireGet(schemaName.N,'No schema found');
+        const templateData = this.templateTable.requireGet(templateId,`fuck there is no templates for template_id ${templateId}  `);
         const data = deserialize(templateData.immutable_serialized_data,schema.format);
         print(`immutable Length ${templateData.immutable_serialized_data.toString()}`)
         
@@ -56,22 +63,15 @@ export class fivefhc extends AllowContract {
           return atomicVal.key == "og_owner";
 
         })*/
-        const item:Items = new Items(new Name(),inlineAction.template_id,inlineAction.newasset_owner,inlineAction.newasset_owner,1);
+
+        const item:Items = new Items(new Name(), templateId, newAssetOwner, newAssetOwner, 1);
         this.itemTable.set(item,this.receiver);
         print('end of inliineaction');
-        
-      }else {
+      } else {
         print('-> No last template')
       }
-    }else {
-
+    } else {
       print(`-> templates table is Empty`);  
-          
-
     }
-    
-
-
   }
-
 };
