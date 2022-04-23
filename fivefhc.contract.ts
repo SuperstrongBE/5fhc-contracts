@@ -1,28 +1,60 @@
 
-import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset } from 'proton-tsc';
-import { sendMintAsset } from "./node_modules/proton-tsc/assembly/atomicassets"
-import { AllowContract } from "./node_modules/proton-tsc/assembly/allow"
-import { Items } from './items.table'
+import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print, unpackActionData, printArray } from 'proton-tsc';
+import { sendMintAsset,Templates,sendCreateTemplate, AtomicAttribute, MintAsset, AtomicValue, deserialize, Schemas } from "proton-tsc/atomicassets"
+import { AllowContract } from "proton-tsc/allow";
+import { Items } from './items.table';
+import { SchemaName,CollectionName } from './fivefhc.constant';
+import { Logmint } from './fivefhc.inline';
 
 @contract
 export class fivefhc extends AllowContract {
 
-  private itemTable:TableStore<Items> = Items.GetTable(this.receiver);
-  private static FULL_PRICE:Asset = new Asset(10000000,new Symbol('FOOBAR',6))
-  private static REDUCED_PRICE:Asset = new Asset(7000000,new Symbol('FOOBAR',6))
+  private static FULL_PRICE:      Asset = new Asset(10000000,new Symbol('FOOBAR',6));
+  private static REDUCED_PRICE:   Asset = new Asset(7000000,new Symbol('FOOBAR',6));
+
+  private itemTable:              TableStore<Items> = Items.GetTable(this.receiver);
+  private templateTable:          TableStore<Templates> =  Templates.getTable(Name.fromString('atomicassets'),Name.fromString(CollectionName))
+  private schemaTable:            TableStore<Schemas> =  Schemas.getTable(Name.fromString('atomicassets'),Name.fromString(SchemaName))
+  
     
 
   @action("mintitem")
-  mintitem(owner:Name, rl_multiplier:u32 ): void {
+  mintitem(owner:Name, rl_multiplier:u32, collectionName:Name,schemaName:Name ): void {
     this.checkContractIsNotPaused();
     requireAuth(this.receiver); 
-    const name:Name = new Name()
-    const authorizedMinter = Name.fromString('fivefhc')
-    const exAsset = new ExtendedAsset(fivefhc.FULL_PRICE,this.receiver);
-    const item:Items = new Items(name,978645123,owner,owner,rl_multiplier);
-    this.itemTable.set(item,this.receiver);
     
-    //Contracts.Token.sendTransferTokens(owner,this.receiver,[exAsset],'');
-    sendMintAsset(this.contract,authorizedMinter,Name.fromString('524vigo'),Name.fromString('524vigo'),98766,owner,[],[],[]);
+    const name:Name = new Name()
+    const authorizedMinter = Name.fromString('fivefhc');
+    const exAsset = new ExtendedAsset(fivefhc.FULL_PRICE,this.receiver);
+    
+    print('-> Right before sendCreateTemplate');
+    sendCreateTemplate(this.receiver,this.receiver,collectionName,schemaName,false,true,1,[]);
+
+    sendMintAsset(this.contract,this.contract,collectionName,schemaName,1,owner,[],[
+      new AtomicAttribute('rl_multiplyer',AtomicValue.new<u32>(7)),
+      new AtomicAttribute('og_owner',AtomicValue.new<string>(owner.toString())),
+    ],[]);
+  } 
+
+  @action("logmint",notify)
+  logmint():void{
+
+    const inlineAction = unpackActionData<Logmint>();
+    
+    print("####### run mintasset on notify!")
+    if (!this.templateTable.isEmpty()){
+      
+      print(`Asset id in inlineAction ${inlineAction.asset_id.toString()}`)
+      
+    }else {
+
+      print(`-> templates table is Empty`);  
+          
+
+    }
+    
+
+
   }
-}
+
+};
