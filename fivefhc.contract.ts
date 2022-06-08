@@ -1,36 +1,42 @@
 
-import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print} from 'proton-tsc';
-import { sendMintAsset,sendCreateTemplate, AtomicAttribute, Assets } from "proton-tsc/atomicassets"
-import { AllowContract } from "proton-tsc/allow";
+import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print, printui, Contract } from 'proton-tsc';
+import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets, sendCreateSchema, AtomicFormat, sendTransferNfts } from "proton-tsc/atomicassets"
 import { Items } from './items.table';
 
 import { sendTransferTokens } from 'proton-tsc/token';
 
 @contract
-export class fivefhc extends AllowContract {
+export class fivefhc extends Contract {
 
-  private static FULL_PRICE       :Asset = new Asset(10000000,new Symbol('FOOBAR',6));
-  private static REDUCED_PRICE    :Asset = new Asset(7000000,new Symbol('FOOBAR',6));
-  private price                   :ExtendedAsset = new ExtendedAsset(fivefhc.FULL_PRICE,this.receiver);
-  private itemTable               :TableStore<Items> = Items.GetTable(this.receiver);
-    
+  private static FULL_PRICE: Asset = new Asset(10, new Symbol('XPR', 6));
+  private static REDUCED_PRICE: Asset = new Asset(7, new Symbol('XPR', 6));
+  private price: ExtendedAsset = new ExtendedAsset(fivefhc.FULL_PRICE, this.receiver);
+  private itemTable: TableStore<Items> = Items.GetTable(this.receiver);
+
 
   @action("mintitem")
-  mintitem(owner:Name, collectionName:Name,schemaName:Name,immutableData:AtomicAttribute[], mutableData:AtomicAttribute[] ): void {
-    this.checkContractIsNotPaused();
-    requireAuth(this.receiver); 
-    
-    const name:Name = new Name()
-    const authorizedMinter = Name.fromString('fivefhc');
-    const exAsset = new ExtendedAsset(fivefhc.FULL_PRICE,this.receiver);
-    
-    print('-> Right before sendCreateTemplate');
-    sendTransferTokens(owner,Name.fromString('fivefhc'),[this.price],'')
-    sendCreateTemplate(this.receiver,this.receiver,collectionName,schemaName,false,true,1,[]);
-    //sendMintAsset(this.contract,this.contract,collectionName,schemaName,1,owner,immutableData,mutableData,[]);
-  } 
+  mintitem(owner: Name, collectionName: Name, schemaName: Name, immutableData: AtomicAttribute[], mutableData: AtomicAttribute[]): void {
 
-  @action("logmint",notify)
+    requireAuth(owner);
+    print(">>>> Mint the assset");
+    
+    
+
+    sendTransferTokens(owner,Name.fromString('fivefhc'),[new ExtendedAsset(fivefhc.FULL_PRICE, Name.fromString("xtokens"))],"5FHC_MINT");
+    /*sendCreateSchema(this.receiver, this.receiver, collectionName, schemaName, [
+      new AtomicFormat("name","string" ),
+      new AtomicFormat("img","string" ),
+      new AtomicFormat("url","string" ),
+      new AtomicFormat("description","string" ),
+      new AtomicFormat("rl_multiplier","string" ),
+      new AtomicFormat("og_owner","string" )
+      
+    ]);*/
+    //sendCreateTemplate(this.receiver, this.receiver, collectionName, schemaName, false, true, 1, []);
+    //sendMintAsset(this.receiver, this.receiver, collectionName, schemaName, 1, owner, immutableData, mutableData, []);
+  }
+
+  @action("logmint", notify)
   logmint(
     assetId: u64,
     authorizedMinter: Name,
@@ -42,47 +48,65 @@ export class fivefhc extends AllowContract {
     mutableData: AtomicAttribute[],
     backedTokens: Asset[],
     immutableTemplateData: AtomicAttribute[],
-  ):void {
+  ): void {
 
     print('reached the notify for fivefhc')
-    const assetTable: TableStore<Assets> =  Assets.getTable(Name.fromString('atomicassets'),newAssetOwner);
-    assetTable.requireGet(assetId,'No asset founds');
+    const assetTable: TableStore<Assets> = Assets.getTable(Name.fromString('atomicassets'), newAssetOwner);
+    assetTable.requireGet(assetId, 'No asset founds');
     const existingItem = this.itemTable.lowerBound(assetId);
     if (existingItem) {
 
       print("Error the item could not exist")
 
-    }/*else {
+    } else {
 
       print("Create new item")
-      const rlMultipler:u32 = mutableData[0].value.get<u32>();
+      if (!mutableData[0].value.get<u32>()) print("Missing required data in mutable")
+      const rlMultipler: u32 = mutableData[0].value.get<u32>();
+      printui(mutableData[0].value.get<u32>())
       const newItem = new Items(
         assetId,
         newAssetOwner,
         newAssetOwner,
-        3
+        rlMultipler
       )
-      this.itemTable.set(newItem,this.receiver);
-      
-        
-    }*/
+      this.itemTable.set(newItem, this.receiver);
 
-      
 
+    }
 
   }
-/*
+
   @action("transfer", notify)
-  onTransfer(): void {
+  onTransfer(from:Name,to:Name,amount:Asset,memo:string): void {
 
-    print('Cool transfer');
+    if(memo === "5FHC_MINT"){
 
+      print('>>>> Transfer nofitifcation');
+      print(memo);
+      print(">>>> Mint the assset");
+  
+
+    }
+    
 
   }
 
-*/
+
 
 
 
 
 };
+
+@packer
+export class TokenTransfer extends ActionData {
+    constructor (
+        public from: Name = new Name(),
+        public to: Name = new Name(),
+        public quantity: Asset = new Asset(),
+        public memo: string = "",
+    ) {
+        super();
+    }
+}
