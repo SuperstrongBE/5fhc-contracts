@@ -4,10 +4,13 @@
   "license": "MIT",
   "scripts": {
     "build": "npx proton-asc fivefhc.contract.ts",
-    "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts"
+    "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts",
+    "playground:nodebug": "npm run build && npx ts-node ./playground.ts"
   },
   "dependencies": {
-    "proton-tsc": "^0.1.4"
+    "color": "^4.2.3",
+    "colors": "^1.4.0",
+    "proton-tsc": "^0.2.14"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -27,6 +30,7 @@
     "crypto": "^1.0.1",
     "mocha": "^9.2.2",
     "npm-run-all": "^4.1.5",
+    "source-map-support": "^0.5.21",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.2"
   }
