@@ -122,13 +122,6 @@ export class fivefhc extends Contract {
 
   }
 
-  @action('lognewtempl',notify)
-  lognewtempl(templateId: i32, creator: Name, collection: Name, schema: Name, transferable: boolean, burnable: boolean, maxSupply: u32, immutableData: AtomicAttribute[]):void{
-
-    print(`log new templ is a real thing .... ${templateId} on ${collection.toString()}`);
-    
-
-  }
 
   @action("mintasset")
   mintAsset(from: Name, collectionName: string, rlmultiplyer: i32): void {
@@ -139,10 +132,10 @@ export class fivefhc extends Contract {
     if (!allowedMinter) return;
     if (allowedMinter.allowedmint == 0) return;
 
-    const templateTable:TableStore<Templates> = Templates.getTable(this.receiver,Name.fromString(collectionName))
+    const templateTable:TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'),Name.fromString(collectionName))
     const lastTemplate = templateTable.last();
-    if (lastTemplate)print('\u001b[32m' + `Template is ok at template_id ${lastTemplate.template_id}` + '\u001b[0m')
-    if (!lastTemplate)print('\u001b[32m' + `Template there is no template on ${collectionName} ....` + '\u001b[0m')
+    
+    if (!lastTemplate)return;
 
     const mutableData: AtomicAttribute[] = [
       new AtomicAttribute('rlmultiplyer', AtomicValue.new<i32>(rlmultiplyer)),
@@ -151,7 +144,7 @@ export class fivefhc extends Contract {
     const immutable_data:AtomicAttribute[] = []
 
     
-    sendMintAsset(this.receiver, this.receiver, Name.fromString(collectionName), Name.fromString(collectionName), 1, from, immutable_data, mutableData, []);
+    sendMintAsset(this.receiver, this.receiver, Name.fromString(collectionName), Name.fromString(collectionName), lastTemplate.template_id, from, immutable_data, mutableData, []);
     allowedMinter.allowedmint -= 1;
     this.allowedMinterTable.update(allowedMinter, this.receiver);
 
