@@ -73,7 +73,10 @@ const main = async () => {
 
   await wait(0);
   //from:Name, collectionName:string,img:string,firstname:string,lastname:string,birthdate:string,rlmultiplyer:i32,url:string
-  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdf654646ezr65z6r5z65sd6f5s",'Michel','Sebastian','01/06/2013','5fhc.com']).send('fivefhc@active')
+  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdf654646ezr65z6r5z65sd6f5s",'Michel','Sebastian','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
+  await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
+  
+  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdfsdfsdgdsgdfgd",'Chrsitphe','Chmigo','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
   await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
 }
 

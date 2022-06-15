@@ -1,6 +1,6 @@
 
 import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print, printui, Contract, check } from 'proton-tsc';
-import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets } from "proton-tsc/atomicassets"
+import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets, deserialize, Schemas } from "proton-tsc/atomicassets"
 import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
 
 import { ShareIndexKey, SplitSharePercentKey, MemoPositionalIndex, MintKey, LoyaltyHWMKey, CollectionName } from './fivefhc.constant';
@@ -9,6 +9,7 @@ import { Config } from './config.table';
 import { AllowedMinter } from './minter.table';
 import { sendTransferTokens } from 'proton-tsc/token';
 import { Templates } from 'proton-tsc/atomicassets';
+import { Log } from './logs.table';
 
 
 @contract
@@ -20,6 +21,7 @@ export class fivefhc extends Contract {
   private itemTable: TableStore<Items> = Items.GetTable(this.receiver);
   private configTable: TableStore<Config> = Config.GetTable(this.receiver);
   private allowedMinterTable: TableStore<AllowedMinter> = AllowedMinter.GetTable(this.receiver);
+  
 
 
   @action('updateconf')
@@ -77,36 +79,28 @@ export class fivefhc extends Contract {
 
     }
 
-
-
-    print('\u001b[32m' + '>>>>>>> Config check after update' + '\u001b[0m')
-    const updateHwm = this.configTable.lowerBound(Name.fromString(LoyaltyHWMKey).N);
-    if (!updateHwm) return
-    print('\u001b[32m' + `SplitHWM amount ${updateHwm.value}` + '\u001b[0m')
-    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
-    if (!updateShare) return
-    print('\u001b[32m' + `Total Shares ${updateShare.value}` + '\u001b[0m')
-    print('\u001b[32m' + `Reward per share ${updateHwm.value / updateShare.value}` + '\u001b[0m')
-    const minter = this.allowedMinterTable.lowerBound(from.N);
-    if (!minter) return;
-    print('\u001b[32m' + `Minter ${from.toString()} as ${minter.allowedmint} mint in reserve` + '\u001b[0m')
   }
 
   @action("createtempl")
-  createTemplate (from: Name, collectionName: string, img: string, firstname: string, lastname: string, birthdate: string,url:string):void {
+  createTemplate(from: Name, collectionName: string, img: string, firstname: string, lastname: string, birthdate: string, url: string,description:string): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
     //TODO: Add check to reject the action
     if (!allowedMinter) return;
     if (allowedMinter.allowedmint == 0) return;
 
+
+    const log2 = new Log(new Name().N);
+    log2.set_log(`Create new item ${firstname} ${lastname}`);
+
     const immutableData: AtomicAttribute[] = [
       new AtomicAttribute('name', AtomicValue.new<string>(`${firstname} ${lastname}`)),
-      new AtomicAttribute('description', AtomicValue.new<string>(``)),
+      new AtomicAttribute('description', AtomicValue.new<string>(description)),
       new AtomicAttribute('img', AtomicValue.new<string>(img)),
       new AtomicAttribute('birthdate', AtomicValue.new<string>(birthdate)),
       new AtomicAttribute('url', AtomicValue.new<string>(url)),
       new AtomicAttribute('ogowner', AtomicValue.new<string>(from.toString())),
+      
     ];
 
     sendCreateTemplate(
@@ -132,18 +126,25 @@ export class fivefhc extends Contract {
     if (!allowedMinter) return;
     if (allowedMinter.allowedmint == 0) return;
 
-    const templateTable:TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'),Name.fromString(collectionName))
+    const templateTable: TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
     const lastTemplate = templateTable.last();
-    
-    if (!lastTemplate)return;
+
+    const log = new Log(new Name().N);
+  
+    if (!lastTemplate)  return;
+
+    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
+    const schema = schemaTable.lowerBound(lastTemplate.schema_name.N);
+
+    //this.logTable.store(log,this.receiver);
 
     const mutableData: AtomicAttribute[] = [
       new AtomicAttribute('rlmultiplyer', AtomicValue.new<i32>(rlmultiplyer)),
     ];
 
-    const immutable_data:AtomicAttribute[] = []
+    if (!schema) return;
+    const immutable_data: AtomicAttribute[] = deserialize(lastTemplate.immutable_serialized_data, schema.format)
 
-    
     sendMintAsset(this.receiver, this.receiver, Name.fromString(collectionName), Name.fromString(collectionName), lastTemplate.template_id, from, immutable_data, mutableData, []);
     allowedMinter.allowedmint -= 1;
     this.allowedMinterTable.update(allowedMinter, this.receiver);
@@ -164,7 +165,7 @@ export class fivefhc extends Contract {
     immutableTemplateData: AtomicAttribute[],
   ): void {
 
-    print('reached the notify for fivefhc')
+    
     const assetTable: TableStore<Assets> = Assets.getTable(Name.fromString('atomicassets'), newAssetOwner);
     assetTable.requireGet(assetId, 'No asset founds');
     const existingItem = this.itemTable.lowerBound(assetId);
@@ -174,7 +175,9 @@ export class fivefhc extends Contract {
 
     } else {
 
-      print("Create new item")
+      const log2 = new Log(new Name().N);
+      log2.set_log(`Create new asset ${assetId}`);
+
       if (!mutableData[0].value.get<i32>()) print("Missing required data in mutable")
       const rlMultiplier: u32 = mutableData[0].value.get<i32>();
       print(`RL multiplier: ${mutableData[0].value.get<i32>()}`)
@@ -195,15 +198,18 @@ export class fivefhc extends Contract {
 
       const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
       if (!updateShare) return
-      print('\u001b[32m' + `Total Shares ${updateShare.value}` + '\u001b[0m')
-
 
     }
+  }
 
+  @action('lognewtempl',notify)
+  logNewTempl ():void{
 
+    print('Ok code happens');
+    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
 
   }
 
-
-
 };
+
+//ok
