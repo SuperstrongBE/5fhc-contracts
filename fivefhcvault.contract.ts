@@ -23,8 +23,8 @@ export class fivefhcvault extends Contract {
         if (!LoyaltyHWM) return;
 
         //Get the asset owned by to
-        const actorCollection:Items = this.itemTable.getBySecondaryIDX64();
-        print(`index,${actorCollection.}`)
+        //const actorCollection:Items = this.itemTable.getBySecondaryIDX64();
+        
         
 
 
