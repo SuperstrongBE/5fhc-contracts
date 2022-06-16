@@ -4,13 +4,14 @@
   "license": "MIT",
   "scripts": {
     "build": "npx proton-asc fivefhc.contract.ts",
+    "build:vault": "npx proton-asc fivefhcvault.contract.ts",
     "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts",
     "playground:nodebug": "npm run build && npx ts-node ./playground.ts"
   },
   "dependencies": {
     "color": "^4.2.3",
     "colors": "^1.4.0",
-    "proton-tsc": "^0.2.14"
+    "proton-tsc": "^0.3.8"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -21,7 +22,7 @@
     "@greymass/abi2core": "^1.1.0",
     "@greymass/eosio": "^0.5.5",
     "@proton/js": "^26.1.2",
-    "@proton/vert": "latest",
+    "@proton/vert": "^0.3.1",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.22",

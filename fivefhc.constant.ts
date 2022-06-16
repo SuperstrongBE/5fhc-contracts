@@ -6,24 +6,16 @@ export const LoyaltyHWMKey = 'gloyaltyhwm'
 export const MintKey = '5FHCMINT'
 
 export enum MemoPositionalIndex {
-
     MINTKEY,
     COLLECTION_NAME,
     RL_MULTIPLIER,
     ASSET_NAME,
     BIRTHDATE,
     IPFS,
-
-
 }
 
 export interface UnserializedMemo {
-
     mintKey: string;
     collectionName: string;
     rlMultiplier: number;
-
 }
-
-
-

@@ -1,32 +1,20 @@
 
-import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print, printui, Contract, check } from 'proton-tsc';
-import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets, deserialize, Schemas } from "proton-tsc/atomicassets"
-import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
-
-import { ShareIndexKey, SplitSharePercentKey, MemoPositionalIndex, MintKey, LoyaltyHWMKey, CollectionName } from './fivefhc.constant';
-import { Items } from './items.table';
-import { Config } from './config.table';
-import { AllowedMinter } from './minter.table';
-import { sendTransferTokens } from 'proton-tsc/token';
-import { Templates } from 'proton-tsc/atomicassets';
-import { Log } from './logs.table';
-
+import { Asset, Name, Symbol, TableStore, ExtendedAsset, print, Contract } from 'proton-tsc';
+import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets, deserialize, Schemas, ATOMICASSETS_CONTRACT, AtomicValue, Templates } from "proton-tsc/atomicassets"
+import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey } from './fivefhc.constant';
+import { Item, Config, AllowedMinter, Log } from './tables';
 
 @contract
 export class fivefhc extends Contract {
-
   private static FULL_PRICE: Asset = new Asset(10, new Symbol('XPR', 6));
   private static REDUCED_PRICE: Asset = new Asset(7, new Symbol('XPR', 6));
   private price: ExtendedAsset = new ExtendedAsset(fivefhc.FULL_PRICE, this.receiver);
-  private itemTable: TableStore<Items> = Items.GetTable(this.receiver);
-  private configTable: TableStore<Config> = Config.GetTable(this.receiver);
-  private allowedMinterTable: TableStore<AllowedMinter> = AllowedMinter.GetTable(this.receiver);
-  
-
+  private itemTable: TableStore<Item> = new TableStore<Item>(this.receiver);
+  private configTable: TableStore<Config> = new TableStore<Config>(this.receiver);
+  private allowedMinterTable: TableStore<AllowedMinter> = new TableStore<AllowedMinter>(this.receiver);
 
   @action('updateconf')
   updateConfig(key: Name, value: f32): void {
-
     // TODO: Check if fivefhc is the caller
     const config = new Config(
       key,
@@ -40,7 +28,6 @@ export class fivefhc extends Contract {
       print(`${stored.value}`);
 
     }
-
   }
 
   @action("transfer", notify)
@@ -48,24 +35,24 @@ export class fivefhc extends Contract {
 
     // TODO: Add conditionnal check for from account to filter unwanted account
 
-    //######
-    //Extract from memo eg:5FHCMINT_654654654201_7 by spliting on _ 
+    // ######
+    // Extract from memo eg:5FHCMINT_654654654201_7 by spliting on _ 
     if (memo.indexOf(MintKey) == -1) return;
 
-    //######
-    //Split share for this transfer
+    // ######
+    // Split share for this transfer
     const splitSharePercent = this.configTable.lowerBound(Name.fromString(SplitSharePercentKey).N);
     if (!splitSharePercent) return
     const additionnalSplitShare = amount.amount as f32 * splitSharePercent.value;
 
-    //Update loyalty amount by high water mark
+    // Update loyalty amount by high water mark
     const LoyaltyHWM = this.configTable.lowerBound(Name.fromString(LoyaltyHWMKey).N);
     if (!LoyaltyHWM) return;
     LoyaltyHWM.value += additionnalSplitShare;
     this.configTable.update(LoyaltyHWM, this.receiver);
 
-    //######
-    //Allow future mint
+    // ######
+    // Allow future mint
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
     if (!allowedMinter) {
 
@@ -85,7 +72,7 @@ export class fivefhc extends Contract {
   createTemplate(from: Name, collectionName: string, img: string, firstname: string, lastname: string, birthdate: string, url: string,description:string): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
-    //TODO: Add check to reject the action
+    // TODO: Add check to reject the action
     if (!allowedMinter) return;
     if (allowedMinter.allowedmint == 0) return;
 
@@ -113,7 +100,6 @@ export class fivefhc extends Contract {
       1,
       immutableData
     );
-
   }
 
 
@@ -122,21 +108,21 @@ export class fivefhc extends Contract {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
 
-    //TODO: Add check to reject the action
+    // TODO: Add check to reject the action
     if (!allowedMinter) return;
     if (allowedMinter.allowedmint == 0) return;
 
-    const templateTable: TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
+    const templateTable = new TableStore<Templates>(ATOMICASSETS_CONTRACT, Name.fromString(collectionName))
     const lastTemplate = templateTable.last();
 
     const log = new Log(new Name().N);
   
     if (!lastTemplate)  return;
 
-    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
+    const schemaTable = new TableStore<Schemas>(ATOMICASSETS_CONTRACT, Name.fromString(collectionName))
     const schema = schemaTable.lowerBound(lastTemplate.schema_name.N);
 
-    //this.logTable.store(log,this.receiver);
+    // this.logTable.store(log,this.receiver);
 
     const mutableData: AtomicAttribute[] = [
       new AtomicAttribute('rlmultiplyer', AtomicValue.new<i32>(rlmultiplyer)),
@@ -164,15 +150,12 @@ export class fivefhc extends Contract {
     backedTokens: Asset[],
     immutableTemplateData: AtomicAttribute[],
   ): void {
-
-    
-    const assetTable: TableStore<Assets> = Assets.getTable(Name.fromString('atomicassets'), newAssetOwner);
+    const assetTable = new TableStore<Assets>(ATOMICASSETS_CONTRACT, newAssetOwner);
     assetTable.requireGet(assetId, 'No asset founds');
+
     const existingItem = this.itemTable.lowerBound(assetId);
     if (existingItem) {
-
       print("Error the item could not exist")
-
     } else {
 
       const log2 = new Log(new Name().N);
@@ -181,7 +164,7 @@ export class fivefhc extends Contract {
       if (!mutableData[0].value.get<i32>()) print("Missing required data in mutable")
       const rlMultiplier: u32 = mutableData[0].value.get<i32>();
       print(`RL multiplier: ${mutableData[0].value.get<i32>()}`)
-      const newItem = new Items(
+      const newItem = new Item(
         assetId,
         newAssetOwner,
         newAssetOwner,
@@ -189,8 +172,8 @@ export class fivefhc extends Contract {
       )
       this.itemTable.set(newItem, this.receiver);
 
-      //######
-      //Update split index
+      // ######
+      // Update split index
       const shareIndex = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
       if (!shareIndex) return;
       shareIndex.value += (rlMultiplier as f32);
@@ -203,13 +186,8 @@ export class fivefhc extends Contract {
   }
 
   @action('lognewtempl',notify)
-  logNewTempl ():void{
-
+  logNewTempl():void{
     print('Ok code happens');
     const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
-
   }
-
 };
-
-//ok
