@@ -59,10 +59,10 @@
     "pako" "2.0.3"
     "ripemd-ts" "0.0.2"
 
-"@proton/vert@^0.3.1":
-  "integrity" "sha512-aAa5aV/bwsipdfigeo1gPwNktBu+Pz0m2tda3FjtQYsdx+Xi9nKcj96m7vprQOAncGEcovUrdIZCSJpGnps/bg=="
-  "resolved" "https://registry.npmjs.org/@proton/vert/-/vert-0.3.1.tgz"
-  "version" "0.3.1"
+"@proton/vert@^0.3.2":
+  "integrity" "sha512-76BYaINUoy2ewrf8Zihet/xK11jPn/sBsfPkbdUEZ8Ch14oiaKCTJvAa9B6fdVYdhds+AGb4cqBNP/aMvaHFXw=="
+  "resolved" "https://registry.npmjs.org/@proton/vert/-/vert-0.3.2.tgz"
+  "version" "0.3.2"
   dependencies:
     "@greymass/eosio" "^0.5.5"
     "bn.js" "^5.2.0"
