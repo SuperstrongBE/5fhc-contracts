@@ -1,39 +1,154 @@
 
-import { Asset, Name, requireAuth, Symbol, TableStore, ExtendedAsset, print, printui, Contract } from 'proton-tsc';
-import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Assets, sendCreateSchema, AtomicFormat, sendTransferNfts } from "proton-tsc/atomicassets"
-import { Items } from './items.table';
+import { Asset, Name, TableStore, print, Contract } from 'proton-tsc';
+import { sendMintAsset, sendCreateTemplate, AtomicAttribute, deserialize, Schemas } from "proton-tsc/atomicassets"
+import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
 
-import { sendTransferTokens } from 'proton-tsc/token';
+import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey } from './fivefhc.constant';
+import { Config } from './config.table';
+import { AllowedAccounts } from './allowedaccounts.table';
+import { Templates } from 'proton-tsc/atomicassets';
+import { Log } from './logs.table';
+
 
 @contract
 export class fivefhc extends Contract {
+  
+  private configTable: TableStore<Config> = Config.GetTable(this.receiver);
+  private allowedMinterTable: TableStore<AllowedAccounts> = AllowedAccounts.GetTable(this.receiver);
 
-  private static FULL_PRICE: Asset = new Asset(10, new Symbol('XPR', 6));
-  private static REDUCED_PRICE: Asset = new Asset(7, new Symbol('XPR', 6));
-  private price: ExtendedAsset = new ExtendedAsset(fivefhc.FULL_PRICE, this.receiver);
-  private itemTable: TableStore<Items> = Items.GetTable(this.receiver);
+  @action('updateconf')
+  updateConfig(key: Name, value: f32): void {
+
+    // TODO: Check if fivefhc is the caller
+    const config = new Config(
+      key,
+      value
+    )
+    this.configTable.store(config, this.receiver);
+
+    const stored = this.configTable.lowerBound(key.N);
+    if (stored) {
+      print(`${stored.key}`);
+      print(`${stored.value}`);
+
+    }
+
+  }
+
+  @action("transfer", notify)
+  onTransfer(from: Name, to: Name, amount: Asset, memo: string): void { 
+
+    // TODO: Add conditionnal check for from account to filter unwanted account
+
+    //######
+    //Extract from memo eg:5FHCMINT
+    if (memo.indexOf(MintKey) == -1) return;
+
+    //######
+    //Split share for this transfer
+    const splitSharePercent = this.configTable.lowerBound(Name.fromString(SplitSharePercentKey).N);
+    if (!splitSharePercent) return
+    const additionnalSplitShare = amount.amount as f32 * splitSharePercent.value;
+
+    //Update loyalty amount by high water mark
+    const LoyaltyHWM = this.configTable.lowerBound(Name.fromString(LoyaltyHWMKey).N);
+    if (!LoyaltyHWM) return;
+    LoyaltyHWM.value += additionnalSplitShare;
+    this.configTable.update(LoyaltyHWM, this.receiver);
+
+    //######
+    //Allow future mint
+    const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
+    if (!allowedMinter) {
+
+      const newAllowedMinter = new AllowedAccounts(from, 1, 0);
+      this.allowedMinterTable.store(newAllowedMinter, this.receiver);
+
+    } else {
+
+      allowedMinter.allowedmint += 1;
+      this.allowedMinterTable.update(allowedMinter, this.receiver);
+
+    }
+
+  }
+
+  @action("createtempl")
+  createTemplate(
+      from: Name, 
+      collectionName: string, 
+      img: string, 
+      firstname: string, 
+      lastname: string, 
+      birthdate: string, 
+      url: string, 
+      description: string
+    ): void {
+
+    const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
+    //TODO: Add check to reject the action
+    if (!allowedMinter) return;
+    if (allowedMinter.allowedmint == 0) return;
 
 
-  @action("mintitem")
-  mintitem(owner: Name, collectionName: Name, schemaName: Name, immutableData: AtomicAttribute[], mutableData: AtomicAttribute[]): void {
+    const log2 = new Log(new Name().N);
+    log2.set_log(`Create new item ${firstname} ${lastname}`);
 
-    requireAuth(owner);
-    print(">>>> Mint the assset");
-    
-    
+    const immutableData: AtomicAttribute[] = [
+      new AtomicAttribute('name', AtomicValue.new<string>(`${firstname} ${lastname}`)),
+      new AtomicAttribute('description', AtomicValue.new<string>(description)),
+      new AtomicAttribute('img', AtomicValue.new<string>(img)),
+      new AtomicAttribute('birthdate', AtomicValue.new<string>(birthdate)),
+      new AtomicAttribute('url', AtomicValue.new<string>(url)),
+      new AtomicAttribute('ogowner', AtomicValue.new<string>(from.toString())),
 
-    sendTransferTokens(owner,Name.fromString('fivefhc'),[new ExtendedAsset(fivefhc.FULL_PRICE, Name.fromString("xtokens"))],"5FHC_MINT");
-    /*sendCreateSchema(this.receiver, this.receiver, collectionName, schemaName, [
-      new AtomicFormat("name","string" ),
-      new AtomicFormat("img","string" ),
-      new AtomicFormat("url","string" ),
-      new AtomicFormat("description","string" ),
-      new AtomicFormat("rl_multiplier","string" ),
-      new AtomicFormat("og_owner","string" )
-      
-    ]);*/
-    //sendCreateTemplate(this.receiver, this.receiver, collectionName, schemaName, false, true, 1, []);
-    //sendMintAsset(this.receiver, this.receiver, collectionName, schemaName, 1, owner, immutableData, mutableData, []);
+    ];
+
+    sendCreateTemplate(
+      this.receiver,
+      this.receiver,
+      Name.fromString(collectionName),
+      Name.fromString(collectionName),
+      false,
+      true,
+      1,
+      immutableData
+    );
+
+  }
+
+  @action("mintasset")
+  mintAsset(from: Name, collectionName: string, rlmultiplyer: i32): void {
+
+    const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
+
+    //TODO: Add check to reject the action
+    if (!allowedMinter) return;
+    if (allowedMinter.allowedmint == 0) return;
+
+    const templateTable: TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
+    const lastTemplate = templateTable.last();
+
+    const log = new Log(new Name().N);
+
+    if (!lastTemplate) return;
+
+    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
+    const schema = schemaTable.lowerBound(lastTemplate.schema_name.N);
+
+    //this.logTable.store(log,this.receiver);
+
+    const mutableData: AtomicAttribute[] = [
+      new AtomicAttribute('rlmultiplyer', AtomicValue.new<i32>(rlmultiplyer)),
+    ];
+
+    if (!schema) return;
+    const immutable_data: AtomicAttribute[] = deserialize(lastTemplate.immutable_serialized_data, schema.format)
+
+    sendMintAsset(this.receiver, this.receiver, Name.fromString(collectionName), Name.fromString(collectionName), lastTemplate.template_id, from, immutable_data, mutableData, []);
+    allowedMinter.allowedmint -= 1;
+    this.allowedMinterTable.update(allowedMinter, this.receiver);
+
   }
 
   @action("logmint", notify)
@@ -50,63 +165,39 @@ export class fivefhc extends Contract {
     immutableTemplateData: AtomicAttribute[],
   ): void {
 
-    print('reached the notify for fivefhc')
-    const assetTable: TableStore<Assets> = Assets.getTable(Name.fromString('atomicassets'), newAssetOwner);
-    assetTable.requireGet(assetId, 'No asset founds');
-    const existingItem = this.itemTable.lowerBound(assetId);
-    if (existingItem) {
-
-      print("Error the item could not exist")
-
-    } else {
-
-      print("Create new item")
-      if (!mutableData[0].value.get<u32>()) print("Missing required data in mutable")
-      const rlMultipler: u32 = mutableData[0].value.get<u32>();
-      printui(mutableData[0].value.get<u32>())
-      const newItem = new Items(
-        assetId,
-        newAssetOwner,
-        newAssetOwner,
-        rlMultipler
-      )
-      this.itemTable.set(newItem, this.receiver);
 
 
-    }
 
-  }
+    if (!mutableData[0].value.get<i32>()) print("Missing required data in mutable")
+    const rlmultiplier: u32 = mutableData[0].value.get<i32>();
 
-  @action("transfer", notify)
-  onTransfer(from:Name,to:Name,amount:Asset,memo:string): void {
+    const existingMinter = this.allowedMinterTable.lowerBound(newAssetOwner.N)
+    if (!existingMinter) return;
+    existingMinter.totalrlm += rlmultiplier;
+    this.allowedMinterTable.update(existingMinter, this.receiver)
 
-    if(memo === "5FHC_MINT"){
 
-      print('>>>> Transfer nofitifcation');
-      print(memo);
-      print(">>>> Mint the assset");
-  
+    //######
+    //Update split index
+    const shareIndex = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
+    if (!shareIndex) return;
+    shareIndex.value += (rlmultiplier as f32);
+    this.configTable.update(shareIndex, this.receiver);
 
-    }
-    
+    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
+    if (!updateShare) return;
 
   }
 
 
+  @action('lognewtempl', notify)
+  logNewTempl(): void {
 
+    print('Ok code happens');
+    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
 
-
+  }
 
 };
 
-@packer
-export class TokenTransfer extends ActionData {
-    constructor (
-        public from: Name = new Name(),
-        public to: Name = new Name(),
-        public quantity: Asset = new Asset(),
-        public memo: string = "",
-    ) {
-        super();
-    }
-}
+//ok

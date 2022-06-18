@@ -1,16 +1,18 @@
+
 import { Name, Table, TableStore } from "proton-tsc";
 
 
 @table("items")
 class ItemsTable extends Table {
+    
 
     constructor(
         public aa_assetid:u64 = 0,
         public curr_owner:Name = new Name(),
         public og_owner:Name = new Name(),
-        public rl_multiplier:u32 = 0
+        public rl_multiplier:i32 = 0
     ){
-        super();
+        super()
     }
     @primary
     get by_assetid():u64{

@@ -1,5 +1,5 @@
 import { Blockchain } from "@proton/vert";
-import { CollectionName } from "./fivefhc.constant";
+import { CollectionName, LoyaltyHWMKey, ShareIndexKey, SplitSharePercentKey } from "./fivefhc.constant";
 
 
 async function wait(ms: number) {
@@ -24,7 +24,7 @@ const main = async () => {
   await xTokensContract.actions.create([contract.name, '5000000000 XPR']).send(`${xTokensContract.name}@active`);
   await xTokensContract.actions.issue([contract.name, '1000000000 XPR', '']).send(`${contract.name}@active`);
   await xTokensContract.actions.transfer([contract.name,userAccount.name.toString(), '1000000000 XPR', 'funding']).send(`${contract.name}@active`);
-  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'5 XPR', '5FHC_MINT']).send(`${userAccount.name}@active`);
+  
 
   //#################################################################################################################################
   // Initialize atomicassets
@@ -39,7 +39,10 @@ const main = async () => {
       { "name": "name", "type": "string" },
       { "name": "img", "type": "ipfs" },
       { "name": "description", "type": "string" },
-      { "name": "url", "type": "string" }
+      { "name": "url", "type": "string" },
+      { "name": "rlmultiplyer", "type": "uint32" },
+      { "name": "ogowner", "type": "string" },
+      { "name": "birthdate", "type": "string" }
     ]
   ]).send()
 
@@ -49,28 +52,34 @@ const main = async () => {
     { "name": "img", "type": "ipfs" },
     { "name": "description", "type": "string" },
     { "name": "url", "type": "string" },
-    { "name": "rl_multiplyer", "type": "uint32" },
-    { "name": "og_owner", "type": "string" },
+    { "name": "rlmultiplyer", "type": "int32" },
+    { "name": "ogowner", "type": "string" },
+    { "name": "birthdate", "type": "string" },
+    { "name": "jobtitle", "type": "string" },
+    { "name": "company", "type": "string" },
 
   ]]).send('fivefhc@active');
 
   //#################################################################################################################################
   // Core contract calls
   await wait(0);
+  await contract.actions.updateconf([SplitSharePercentKey,0.35]).send('fivefhc@active')
+  await contract.actions.updateconf([ShareIndexKey,0]).send('fivefhc@active')
+  await contract.actions.updateconf([LoyaltyHWMKey,0]).send('fivefhc@active')
+  
+  await wait(0);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
 
-
-  await contract.actions.mintitem([userAccount.name, CollectionName, CollectionName,
-    [
-      { "key": "name", "value": ["string", "Cool NFT"] },
-      { "key": "description", "value": ["string", "a realy Cool NFT"] },
-      { "key": "img", "value": ["string", "QmP12BGM6pa9e427DVe8K77RjSUSLi6d1ZZsafJxWrvo7j"] },
-      { "key": "url", "value": ["string", "https://coolnft.io"] },
-
-    ],
-    [
-      { "key": "rl_multiplyer", "value": ["uint32", "7"] },
-    ]
-  ]).send('johnson@active')
+  await wait(0);
+  //from:Name, collectionName:string,img:string,firstname:string,lastname:string,birthdate:string,rlmultiplyer:i32,url:string
+  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdf654646ezr65z6r5z65sd6f5s",'Michel','Sebastian','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
+  await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
+  
+  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdfsdfsdgdsgdfgd",'Chrsitphe','Chmigo','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
+  await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
 }
 
 main()
