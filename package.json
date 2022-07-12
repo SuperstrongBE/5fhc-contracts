@@ -3,13 +3,17 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npx proton-asc fivefhc.contract.ts",
+    "build": "npx proton-asc fivefhc.contract.ts && npx proton-asc fivefhcvault.contract.ts",
+    "build:vault": "npx proton-asc fivefhcvault.contract.ts ",
     "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts",
     "playground:nodebug": "npm run build && npx ts-node ./playground.ts"
   },
   "dependencies": {
+    "@faker-js/faker": "^7.2.0",
+    "@types/lodash": "^4.14.182",
     "color": "^4.2.3",
     "colors": "^1.4.0",
+    "lodash": "^4.17.21",
     "proton-tsc": "^0.2.14"
   },
   "engines": {

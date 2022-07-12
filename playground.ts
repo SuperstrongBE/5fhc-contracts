@@ -1,5 +1,10 @@
-import { Blockchain } from "@proton/vert";
-import { CollectionName, LoyaltyHWMKey, ShareIndexKey, SplitSharePercentKey } from "./fivefhc.constant";
+import { Blockchain, nameToBigInt, symbolCodeToBigInt,Account } from "@proton/vert";
+import { AvailableTemplateDataKey, CollectionName, LoyaltyHWMKey, ShareIndexKey, SplitSharePercentKey } from "./fivefhc.constant";
+import { TemplateData } from './generator';
+import _ from 'lodash';
+import { json } from "stream/consumers";
+import { Name,Asset } from "@greymass/eosio";
+
 
 
 async function wait(ms: number) {
@@ -10,21 +15,25 @@ async function wait(ms: number) {
 
 const main = async () => {
   const blockchain = new Blockchain();
-  
+
   const xTokensContract = blockchain.createContract('xtokens', 'node_modules/proton-tsc/external/xtokens/xtokens', true);
   //console.log (JSON.stringify(xTokensContract.actions));
   const contract = blockchain.createContract('fivefhc', 'target/fivefhc.contract', true);
+  const vaultAccount  = blockchain.createContract('fivefhcvault', 'target/fivefhcvault.contract', true);
   const atomicContract = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets', true);
+  const claimerAccount = blockchain.createAccount('remy');
   const userAccount = blockchain.createAccount('johnson');
   
+
   //#################################################################################################################################
   //Create and issue token 
   await wait(0);
-  
-  await xTokensContract.actions.create([contract.name, '5000000000 XPR']).send(`${xTokensContract.name}@active`);
-  await xTokensContract.actions.issue([contract.name, '1000000000 XPR', '']).send(`${contract.name}@active`);
-  await xTokensContract.actions.transfer([contract.name,userAccount.name.toString(), '1000000000 XPR', 'funding']).send(`${contract.name}@active`);
-  
+
+  await xTokensContract.actions.create([contract.name, '5000000000.0000 XPR']).send(`${xTokensContract.name}@active`);
+  await xTokensContract.actions.issue([contract.name, '1000000000.0000 XPR', '']).send(`${contract.name}@active`);
+  await xTokensContract.actions.transfer([contract.name, userAccount.name.toString(), '500000000.0000 XPR', 'funding']).send(`${contract.name}@active`);
+  await xTokensContract.actions.transfer([contract.name, claimerAccount.name.toString(), '500000000.0000 XPR', 'funding']).send(`${contract.name}@active`);
+
 
   //#################################################################################################################################
   // Initialize atomicassets
@@ -32,7 +41,7 @@ const main = async () => {
   // atomicassets Create schema
   await wait(0);
 
-  
+
   await atomicContract.actions.init().send()
   await atomicContract.actions.admincoledit([
     [
@@ -40,9 +49,22 @@ const main = async () => {
       { "name": "img", "type": "ipfs" },
       { "name": "description", "type": "string" },
       { "name": "url", "type": "string" },
-      { "name": "rlmultiplyer", "type": "uint32" },
+      { "name": "rlmultiplier", "type": "uint32" },
       { "name": "ogowner", "type": "string" },
-      { "name": "birthdate", "type": "string" }
+      { "name": "tdataid", "type": "uint64" },
+      { "name": "birthdate", "type": "string" },
+      { "name": "jobtitle", "type": "string" },
+      { "name": "company", "type": "string" },
+      //TRAITS
+      { "name": "skincolor", "type": "string" },
+      { "name": "mouth", "type": "string" },
+      { "name": "eyes", "type": "string" },
+      { "name": "nose", "type": "string" },
+      { "name": "clothe", "type": "string" },
+      { "name": "apparel", "type": "string" },
+      { "name": "texture", "type": "string" },
+      { "name": "shape", "type": "string" },
+      { "name": "tip", "type": "string" }
     ]
   ]).send()
 
@@ -52,34 +74,94 @@ const main = async () => {
     { "name": "img", "type": "ipfs" },
     { "name": "description", "type": "string" },
     { "name": "url", "type": "string" },
-    { "name": "rlmultiplyer", "type": "int32" },
+    { "name": "rlmultiplier", "type": "uint32" },
     { "name": "ogowner", "type": "string" },
+    { "name": "tdataid", "type": "uint64" },
     { "name": "birthdate", "type": "string" },
     { "name": "jobtitle", "type": "string" },
     { "name": "company", "type": "string" },
-
+    //TRAITS
+    { "name": "skincolor", "type": "string" },
+    { "name": "mouth", "type": "string" },
+    { "name": "eyes", "type": "string" },
+    { "name": "nose", "type": "string" },
+    { "name": "clothe", "type": "string" },
+    { "name": "apparel", "type": "string" },
+    { "name": "texture", "type": "string" },
+    { "name": "shape", "type": "string" },
+    { "name": "tip", "type": "string" }
   ]]).send('fivefhc@active');
 
   //#################################################################################################################################
   // Core contract calls
   await wait(0);
-  await contract.actions.updateconf([SplitSharePercentKey,0.35]).send('fivefhc@active')
-  await contract.actions.updateconf([ShareIndexKey,0]).send('fivefhc@active')
-  await contract.actions.updateconf([LoyaltyHWMKey,0]).send('fivefhc@active')
+  await contract.actions.addconf([SplitSharePercentKey, 25]).send('fivefhc@active');
+  await contract.actions.addconf([ShareIndexKey, 0]).send('fivefhc@active');
+  await contract.actions.addconf([LoyaltyHWMKey, 0]).send('fivefhc@active');
+  await contract.actions.addconf([AvailableTemplateDataKey, 0]).send('fivefhc@active');
+
   
-  await wait(0);
-  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
-  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
-  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
-  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString() ,'270 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await wait(0)
+  //from:Name, collectionName:string,img:string,firstname:string,lastname:string,birthdate:string,rlmultiplyer:i32,url:string
+
+  for (var i = 0; i < 100; i++) {
+
+    let td = TemplateData();
+    
+    await contract.actions.addtempldata([td.name, CollectionName, td.immutable, td.mutable]).send('fivefhc@active')
+    
+
+  }
 
   await wait(0);
-  //from:Name, collectionName:string,img:string,firstname:string,lastname:string,birthdate:string,rlmultiplyer:i32,url:string
-  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdf654646ezr65z6r5z65sd6f5s",'Michel','Sebastian','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
-  await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
   
-  await contract.actions.createtempl([userAccount.name.toString(),CollectionName,"sdfsdfsdgdsgdfgd",'Chrsitphe','Chmigo','01/06/2013','5fhc.com',"dickehead"]).send('fivefhc@active')
-  await contract.actions.mintasset([userAccount.name.toString(),CollectionName,7]).send('fivefhc@active')
+
+  await wait(0);
+  await xTokensContract.actions.transfer([claimerAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${claimerAccount.name}@active`);
+  await xTokensContract.actions.transfer([claimerAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${claimerAccount.name}@active`);
+  await wait(1000);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  await xTokensContract.actions.transfer([userAccount.name.toString(), contract.name.toString(), '275.0000 XPR', '5FHCMINT']).send(`${userAccount.name}@active`);
+  
+  
+  
+  //console.log("##Vaulted account is ")
+  //console.log(JSON.stringify(account))
+
+  await wait(0);
+  await contract.actions.mintasset([claimerAccount.name.toString()]).send('fivefhc@active')  
+  await contract.actions.mintasset([claimerAccount.name.toString()]).send('fivefhc@active')  
+  await wait(0);
+  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
+  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
+  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
+  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')
+
+  await wait(1000);
+  
+  console.log(JSON.stringify(contract.tables.config().getTableRows()))
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  await wait(1000);
+  /*while (contract.tables.templdata().getTableRows().length > 0) {
+  
+    console.log (`#Template consumption ${contract.tables.templdata().getTableRows().length}`);
+    await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
+
+
+  }*/
+  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
+  const account = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  console.log("##Vaulted account is now")
+  console.log(JSON.stringify(account))
+}
+
+const getAccount = (contract: Account, accountName: string, symcode: string) => {
+  const accountBigInt = nameToBigInt(Name.from(accountName));
+  const symcodeBigInt = symbolCodeToBigInt(Asset.SymbolCode.from(symcode));
+  return contract.tables.accounts(accountBigInt).getTableRow(symcodeBigInt)
 }
 
 main()

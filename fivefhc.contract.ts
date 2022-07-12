@@ -1,23 +1,42 @@
 
-import { Asset, Name, TableStore, print, Contract } from 'proton-tsc';
-import { sendMintAsset, sendCreateTemplate, AtomicAttribute, deserialize, Schemas } from "proton-tsc/atomicassets"
+import { Asset, Name, TableStore, print, Contract, check, ExtendedAsset } from 'proton-tsc';
+import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Schemas, Templates, findIndexOfAttribute } from "proton-tsc/atomicassets"
 import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
+import { sendTransferTokens } from 'proton-tsc/token';
+import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey, AvailableTemplateDataKey } from './fivefhc.constant';
+import { Config, AllowedAccounts, Log, TemplatesData } from './tables';
 
-import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey } from './fivefhc.constant';
-import { Config } from './config.table';
-import { AllowedAccounts } from './allowedaccounts.table';
-import { Templates } from 'proton-tsc/atomicassets';
-import { Log } from './logs.table';
+
 
 
 @contract
 export class fivefhc extends Contract {
-  
+
   private configTable: TableStore<Config> = Config.GetTable(this.receiver);
   private allowedMinterTable: TableStore<AllowedAccounts> = AllowedAccounts.GetTable(this.receiver);
+  private templateDataTable: TableStore<TemplatesData> = TemplatesData.GetTable(this.receiver);
 
   @action('updateconf')
-  updateConfig(key: Name, value: f32): void {
+  updateConfig(key: Name, value: i64): void {
+
+    // TODO: Check if fivefhc is the caller
+    const config = new Config(
+      key,
+      value
+    )
+    this.configTable.update(config, this.receiver);
+
+    const stored = this.configTable.lowerBound(key.N);
+    if (stored) {
+      print(`${stored.key}`);
+      print(`${stored.value}`);
+
+    }
+
+  }
+  
+  @action('addconf')
+  addConfig(key: Name, value: i64): void {
 
     // TODO: Check if fivefhc is the caller
     const config = new Config(
@@ -36,10 +55,11 @@ export class fivefhc extends Contract {
   }
 
   @action("transfer", notify)
-  onTransfer(from: Name, to: Name, amount: Asset, memo: string): void { 
+  onTransfer(from: Name, to: Name, amount: Asset, memo: string): void {
 
     // TODO: Add conditionnal check for from account to filter unwanted account
 
+    if (from.toString() == 'fivefhc')return;
     //######
     //Extract from memo eg:5FHCMINT
     if (memo.indexOf(MintKey) == -1) return;
@@ -48,42 +68,53 @@ export class fivefhc extends Contract {
     //Split share for this transfer
     const splitSharePercent = this.configTable.lowerBound(Name.fromString(SplitSharePercentKey).N);
     if (!splitSharePercent) return
-    const additionnalSplitShare = amount.amount as f32 * splitSharePercent.value;
+    const additionnalSplitShare = (amount.amount * splitSharePercent.value)/100;
+    print(`##Split share is ${additionnalSplitShare}`)
+    //sendTransferTokens(this.receiver,Name.fromString('fivefhcvault'),[new ExtendedAsset(new Asset(additionnalSplitShare,amount.symbol),Name.fromString('xtokens'))],`Vaulted from ${from}`)
 
     //Update loyalty amount by high water mark
-    const LoyaltyHWM = this.configTable.lowerBound(Name.fromString(LoyaltyHWMKey).N);
+    const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
     if (!LoyaltyHWM) return;
     LoyaltyHWM.value += additionnalSplitShare;
     this.configTable.update(LoyaltyHWM, this.receiver);
 
     //######
     //Allow future mint
-    const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
+    print(`allowed minter check ${from.toString()}`)
+    const allowedMinter = this.allowedMinterTable.get(from.N)
+    
+    
     if (!allowedMinter) {
 
       const newAllowedMinter = new AllowedAccounts(from, 1, 0);
+      newAllowedMinter.by_key = from.N;
+      print(`##New allowed minter ${newAllowedMinter.key.toString()}`)
       this.allowedMinterTable.store(newAllowedMinter, this.receiver);
 
     } else {
 
       allowedMinter.allowedmint += 1;
       this.allowedMinterTable.update(allowedMinter, this.receiver);
+      print(`##know allowed minter ${allowedMinter.key.toString()}`)
+      print(`mint count ${allowedMinter.allowedmint}`)
 
     }
+
+    
 
   }
 
   @action("createtempl")
   createTemplate(
-      from: Name, 
-      collectionName: string, 
-      img: string, 
-      firstname: string, 
-      lastname: string, 
-      birthdate: string, 
-      url: string, 
-      description: string
-    ): void {
+    from: Name,
+    collectionName: string,
+    img: string,
+    firstname: string,
+    lastname: string,
+    birthdate: string,
+    url: string,
+    description: string
+  ): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
     //TODO: Add check to reject the action
@@ -117,37 +148,82 @@ export class fivefhc extends Contract {
 
   }
 
+  @action("addtempldata")
+  addTemplateData(
+    key: Name,
+    collectionName: Name,
+    immmutableData: AtomicAttribute[],
+    mutableData: AtomicAttribute[]
+  ): void {
+
+    const dataKey = this.templateDataTable.availablePrimaryKey;
+    const templateData = new TemplatesData();
+    
+    templateData.key.N = dataKey;
+    templateData.collectionName = collectionName;
+    templateData.immmutableData = immmutableData;
+    templateData.immmutableData.push(new AtomicAttribute('tdataid',AtomicValue.new<u64>(dataKey)))
+    templateData.mutableData = mutableData;
+    this.templateDataTable.store(templateData, this.receiver);
+    const availableTemplateData = this.configTable.get(Name.fromString(AvailableTemplateDataKey).N);
+    if (!availableTemplateData) {
+
+      const configRow = new Config(Name.fromString(AvailableTemplateDataKey), 0);
+      configRow.key = Name.fromString(AvailableTemplateDataKey);
+      configRow.value += 1;
+      this.configTable.store(configRow, this.receiver);
+      print(`add new row for templatedata coutn`)
+
+    } else {
+
+      availableTemplateData.value += 1;
+      this.configTable.update(availableTemplateData, this.receiver);
+      print(`update row for templatedata coutn ${availableTemplateData.value}`)
+
+    }
+
+    print(`End of addtemplatedata`)
+
+
+  }
+
   @action("mintasset")
-  mintAsset(from: Name, collectionName: string, rlmultiplyer: i32): void {
+  mintAsset(from: Name): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
-
+    
     //TODO: Add check to reject the action
+    check(!!allowedMinter,'No Allowed minter') ;
     if (!allowedMinter) return;
-    if (allowedMinter.allowedmint == 0) return;
+    check(allowedMinter.allowedmint > 0,'Allowed mint reached') ;
+    if (allowedMinter.allowedmint < 0) return;
 
-    const templateTable: TableStore<Templates> = Templates.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
-    const lastTemplate = templateTable.last();
+    print(`Mint statrt for ${from.toString} allowed by ${allowedMinter.allowedmint} `)
+    const pickedData = this.templateDataTable.last();
+    check(pickedData != null,'Can\'t select an item to mint');
+    if (!pickedData) return;
+    print(`The picked up item is ${pickedData.key.toString()}`)
 
-    const log = new Log(new Name().N);
-
-    if (!lastTemplate) return;
-
-    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), Name.fromString(collectionName))
-    const schema = schemaTable.lowerBound(lastTemplate.schema_name.N);
-
-    //this.logTable.store(log,this.receiver);
-
-    const mutableData: AtomicAttribute[] = [
-      new AtomicAttribute('rlmultiplyer', AtomicValue.new<i32>(rlmultiplyer)),
-    ];
-
+    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), pickedData.collectionName)
+    const schema = schemaTable.get(pickedData.collectionName.N);
+    check(schema != null,'schema didnt exists');
     if (!schema) return;
-    const immutable_data: AtomicAttribute[] = deserialize(lastTemplate.immutable_serialized_data, schema.format)
-
-    sendMintAsset(this.receiver, this.receiver, Name.fromString(collectionName), Name.fromString(collectionName), lastTemplate.template_id, from, immutable_data, mutableData, []);
-    allowedMinter.allowedmint -= 1;
-    this.allowedMinterTable.update(allowedMinter, this.receiver);
+    print(`Last scheme ${schema.primary}`);
+    const immutabes = pickedData.immmutableData;
+    immutabes.unshift(new AtomicAttribute('ogowner',  AtomicValue.new<string>(from.toString())))
+    
+    
+    sendCreateTemplate(
+      this.receiver,
+      this.receiver,
+      pickedData.collectionName,
+      pickedData.collectionName,
+      true,
+      true,
+      1,
+      immutabes
+    );
+    
 
   }
 
@@ -165,36 +241,68 @@ export class fivefhc extends Contract {
     immutableTemplateData: AtomicAttribute[],
   ): void {
 
+    const tdataidIndex = findIndexOfAttribute(immutableData,'tdataid')
+    check(tdataidIndex != -1, "Can't reach the tdataid")
+    print('ok tdataid')
+    const templateDataKey = immutableData[tdataidIndex].value.get<u64>();
 
+    const templateData = this.templateDataTable.lowerBound(templateDataKey)
+    check(templateData != null, "Can't reach the temmplate data")
+    if (!templateData)return;
+    this.templateDataTable.remove(templateData)
 
+    const ogOwnerIndex = findIndexOfAttribute(immutableData,'ogowner')
+    check(ogOwnerIndex != -1, "Can't find the ogowner")
+    const ogOwner = immutableData[ogOwnerIndex].value.get<string>();
+    print('ok og')
+    print('Clean data process')
 
-    if (!mutableData[0].value.get<i32>()) print("Missing required data in mutable")
-    const rlmultiplier: u32 = mutableData[0].value.get<i32>();
+    // UPDATE RLM for account
+    const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
+    check(!!allowedMinter,'OGOwner is not an allowed minter');
+    if (!allowedMinter)return;
+    allowedMinter.totalrlm +=1;
+    this.allowedMinterTable.update(allowedMinter,this.receiver);
 
-    const existingMinter = this.allowedMinterTable.lowerBound(newAssetOwner.N)
-    if (!existingMinter) return;
-    existingMinter.totalrlm += rlmultiplier;
-    this.allowedMinterTable.update(existingMinter, this.receiver)
+    // UPDATE THE global SHARE INDEX
+    const shareIndex = this.configTable.get(Name.fromString(ShareIndexKey).N);
+    check(!!shareIndex,"Config not found");
+    if(!shareIndex) return
+    shareIndex.value +=1;
+    this.configTable.update(shareIndex,this.receiver)
 
-
-    //######
-    //Update split index
-    const shareIndex = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
-    if (!shareIndex) return;
-    shareIndex.value += (rlmultiplier as f32);
-    this.configTable.update(shareIndex, this.receiver);
-
-    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
-    if (!updateShare) return;
+    
+    
 
   }
 
 
   @action('lognewtempl', notify)
-  logNewTempl(): void {
+  logNewTempl(templateId: i32, creator: Name, collection: Name, schema: Name, transferable: boolean, burnable: boolean, maxSupply: u32, immutableData: AtomicAttribute[]): void {
 
-    print('Ok code happens');
-    const updateShare = this.configTable.lowerBound(Name.fromString(ShareIndexKey).N);
+    print('en  new log templ')
+    const ogOwnerIndex = findIndexOfAttribute(immutableData,'ogowner')
+    check(ogOwnerIndex != -1, "Can't find the ogowner")
+    const ogOwner = immutableData[ogOwnerIndex].value.get<string>();
+    print('ok og')
+    const tdataidIndex = findIndexOfAttribute(immutableData,'tdataid')
+    check(tdataidIndex != -1, "Can't reach the tdataid")
+    print('ok tdataid')
+    const templateDataKey = immutableData[tdataidIndex].value.get<u64>();
+    
+    const templateData = this.templateDataTable.get(templateDataKey)
+    check(templateData != null, "Can't reach the temmplate data")
+    if (!templateData)return;
+    
+    print(`this next asset will transfered to ${ogOwner}`)
+    const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
+    check(!!allowedMinter,'OGOwner is not an allowed minter');
+    if (!allowedMinter)return;
+    sendMintAsset(this.receiver, this.receiver, collection, schema, templateId, Name.fromString(ogOwner), immutableData, templateData.mutableData, []);
+    
+    allowedMinter.allowedmint -=1;
+    this.allowedMinterTable.update(allowedMinter, this.receiver);
+    
 
   }
 
