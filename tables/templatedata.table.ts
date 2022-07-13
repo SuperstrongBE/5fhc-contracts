@@ -5,24 +5,24 @@ import { AtomicAttribute } from "proton-tsc/atomicassets";
 
 @table("templdata")
 class TemplatesTable extends Table {
-    
 
     constructor(
-        public key:Name = new Name(),
-        public collectionName:Name = new Name(),
-        public immmutableData:AtomicAttribute[] = [],
-        public mutableData:AtomicAttribute[] = []
-    ){
+        public key: Name = new Name(),
+        public collectionName: Name = new Name(),
+        public immmutableData: AtomicAttribute[] = [],
+        public mutableData: AtomicAttribute[] = []
+    ) {
         super()
     }
+    
     @primary
-    get by_key():u64{
+    get by_key(): u64 {
 
         return this.key.N;
 
     }
-    
-    set by_key(value: u64){
+
+    set by_key(value: u64) {
 
         this.key.N = value
 
@@ -31,4 +31,4 @@ class TemplatesTable extends Table {
 
 }
 
-export class TemplatesData extends TemplatesTable {}
+export class TemplatesData extends TemplatesTable { }

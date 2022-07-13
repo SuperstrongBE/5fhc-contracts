@@ -13,9 +13,7 @@ export enum MemoPositionalIndex {
     RL_MULTIPLIER,
     ASSET_NAME,
     BIRTHDATE,
-    IPFS,
-
-
+    IPFS
 }
 
 export interface UnserializedMemo {
