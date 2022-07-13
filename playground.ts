@@ -140,22 +140,23 @@ const main = async () => {
   await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')
 
   await wait(1000);
+  const accountBefore = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   
   console.log(JSON.stringify(contract.tables.config().getTableRows()))
   console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
-  await wait(1000);
-  /*while (contract.tables.templdata().getTableRows().length > 0) {
-  
-    console.log (`#Template consumption ${contract.tables.templdata().getTableRows().length}`);
-    await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
-
-
-  }*/
-  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
-  const account = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
   console.log("##Vaulted account is now")
-  console.log(JSON.stringify(account))
+  console.log(JSON.stringify(accountBefore))
+  await wait(1000);
+  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
+  await wait(1000);
+  console.log('##### Final result #####')
+  const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
+  console.log(JSON.stringify(contract.tables.config().getTableRows()))
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  console.log("##Vaulted account is now")
+  console.log(JSON.stringify(accountAfter))
 }
 
 const getAccount = (contract: Account, accountName: string, symcode: string) => {

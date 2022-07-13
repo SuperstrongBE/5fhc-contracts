@@ -53,14 +53,6 @@ class ItemsTable extends Table {
 
     }
 
-    static GetTable (code:Name):TableStore<Items>{
-
-        return new TableStore<Items>(code,code,Name.fromString('items'))
-
-    }
-
-
-
 }
 
 export class Items extends ItemsTable {}

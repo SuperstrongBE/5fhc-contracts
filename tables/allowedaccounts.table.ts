@@ -34,12 +34,7 @@ class AllowedAccountsTable extends Table {
     }
     
 
-    static GetTable (code:Name):TableStore<AllowedAccounts>{
-
-        return new TableStore<AllowedAccounts>(code,code,Name.fromString('allowedaccs'))
-
-    }
-
+   
 }
 
 export class AllowedAccounts extends AllowedAccountsTable {}

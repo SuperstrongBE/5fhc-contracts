@@ -32,15 +32,6 @@ class LogsTable extends Table {
         this.log = value
     }
 
-    
-    
-
-    static GetTable (code:Name):TableStore<Log>{
-
-        return new TableStore<Log>(code,code,Name.fromString('logs'))
-
-    }
-
 }
 
 export class Log extends LogsTable {}

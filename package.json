@@ -14,7 +14,7 @@
     "color": "^4.2.3",
     "colors": "^1.4.0",
     "lodash": "^4.17.21",
-    "proton-tsc": "^0.2.14"
+    "proton-tsc": "^0.3.26"
   },
   "engines": {
     "npm": ">=7.0.0",

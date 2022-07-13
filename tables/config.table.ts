@@ -30,13 +30,6 @@ class ConfigTable extends Table {
         return this.value;
 
     }
-    
-
-    static GetTable (code:Name):TableStore<Config>{
-
-        return new TableStore<Config>(code,code,Name.fromString('config'))
-
-    }
 
 }
 

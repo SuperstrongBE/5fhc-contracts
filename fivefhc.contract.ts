@@ -1,5 +1,5 @@
 
-import { Asset, Name, TableStore, print, Contract, check, ExtendedAsset } from 'proton-tsc';
+import { Asset, Name, TableStore, print, Contract, check, ExtendedAsset, requireAuth } from 'proton-tsc';
 import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Schemas, Templates, findIndexOfAttribute } from "proton-tsc/atomicassets"
 import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
 import { sendTransferTokens } from 'proton-tsc/token';
@@ -12,9 +12,9 @@ import { Config, AllowedAccounts, Log, TemplatesData } from './tables';
 @contract
 export class fivefhc extends Contract {
 
-  private configTable: TableStore<Config> = Config.GetTable(this.receiver);
-  private allowedMinterTable: TableStore<AllowedAccounts> = AllowedAccounts.GetTable(this.receiver);
-  private templateDataTable: TableStore<TemplatesData> = TemplatesData.GetTable(this.receiver);
+  private configTable: TableStore<Config> = new TableStore<Config>(this.receiver);
+  private allowedMinterTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(this.receiver);
+  private templateDataTable: TableStore<TemplatesData> = new TableStore<TemplatesData>(this.receiver);
 
   @action('updateconf')
   updateConfig(key: Name, value: i64): void {
@@ -66,11 +66,11 @@ export class fivefhc extends Contract {
 
     //######
     //Split share for this transfer
-    const splitSharePercent = this.configTable.lowerBound(Name.fromString(SplitSharePercentKey).N);
+    const splitSharePercent = this.configTable.get(Name.fromString(SplitSharePercentKey).N);
     if (!splitSharePercent) return
     const additionnalSplitShare = (amount.amount * splitSharePercent.value)/100;
     print(`##Split share is ${additionnalSplitShare}`)
-    //sendTransferTokens(this.receiver,Name.fromString('fivefhcvault'),[new ExtendedAsset(new Asset(additionnalSplitShare,amount.symbol),Name.fromString('xtokens'))],`Vaulted from ${from}`)
+    sendTransferTokens(this.receiver,Name.fromString('fivefhcvault'),[new ExtendedAsset(new Asset(additionnalSplitShare,amount.symbol),Name.fromString('xtokens'))],`Vaulted from ${from}`)
 
     //Update loyalty amount by high water mark
     const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
@@ -204,7 +204,7 @@ export class fivefhc extends Contract {
     if (!pickedData) return;
     print(`The picked up item is ${pickedData.key.toString()}`)
 
-    const schemaTable: TableStore<Schemas> = Schemas.getTable(Name.fromString('atomicassets'), pickedData.collectionName)
+    const schemaTable: TableStore<Schemas> = new TableStore<Schemas>(Name.fromString('atomicassets'), pickedData.collectionName)
     const schema = schemaTable.get(pickedData.collectionName.N);
     check(schema != null,'schema didnt exists');
     if (!schema) return;
@@ -306,6 +306,18 @@ export class fivefhc extends Contract {
 
   }
 
+  @action('updateclaim')
+  updateclaim (actor:Name,claimedAmnt:i64):void {
+
+    requireAuth(Name.fromString('fivefhcvault'));
+    const account = this.allowedMinterTable.get(actor.N);
+    check(!!account,'Unknow account');
+    if (!account)return;
+    account.claimedAmnt+=claimedAmnt;
+    this.allowedMinterTable.update(account,this.receiver);
+
+
+  }
+
 };
 
-//ok

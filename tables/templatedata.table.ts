@@ -29,14 +29,6 @@ class TemplatesTable extends Table {
     }
 
 
-    static GetTable (code:Name):TableStore<TemplatesData>{
-
-        return new TableStore<TemplatesData>(code,code,Name.fromString('templdata'))
-
-    }
-
-
-
 }
 
 export class TemplatesData extends TemplatesTable {}
