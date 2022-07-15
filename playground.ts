@@ -148,8 +148,20 @@ const main = async () => {
   console.log("##Vaulted account is now")
   console.log(JSON.stringify(accountBefore))
   await wait(1000);
-  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
   await wait(1000);
+  for(let i:number = 0 ; i<10 ; i++){
+
+    await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
+  console.log(`##### Final result ${1} #####`)
+  const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
+  console.log(JSON.stringify(contract.tables.config().getTableRows()))
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  console.log(JSON.stringify(contract.tables.allowedaccs().getTableRows()))
+  console.log(`##Vaulted account is now after ${i} claims`)
+  console.log(JSON.stringify(accountAfter))
+
+  }
+  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
   console.log('##### Final result #####')
   const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   console.log(JSON.stringify(contract.tables.config().getTableRows()))

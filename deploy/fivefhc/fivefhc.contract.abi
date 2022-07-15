@@ -1,0 +1,355 @@
+{
+  "version": "eosio::abi/1.1",
+  "structs": [
+    {
+      "name": "AllowedAccountsTable",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "allowedmint",
+          "type": "uint32"
+        },
+        {
+          "name": "claimedAmnt",
+          "type": "int64"
+        },
+        {
+          "name": "totalrlm",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "AtomicAttribute",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "AtomicValue"
+        }
+      ]
+    },
+    {
+      "name": "AtomicFormat",
+      "base": "",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "ConfigTable",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "value",
+          "type": "int64"
+        }
+      ]
+    },
+    {
+      "name": "ExtendedSymbol",
+      "base": "",
+      "fields": [
+        {
+          "name": "sym",
+          "type": "symbol"
+        },
+        {
+          "name": "contract",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "ItemsTable",
+      "base": "",
+      "fields": [
+        {
+          "name": "aa_assetid",
+          "type": "uint64"
+        },
+        {
+          "name": "curr_owner",
+          "type": "name"
+        },
+        {
+          "name": "og_owner",
+          "type": "name"
+        },
+        {
+          "name": "rl_multiplier",
+          "type": "int32"
+        }
+      ]
+    },
+    {
+      "name": "LogsTable",
+      "base": "",
+      "fields": [
+        {
+          "name": "index",
+          "type": "uint64"
+        },
+        {
+          "name": "log",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "TemplatesTable",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "collectionName",
+          "type": "name"
+        },
+        {
+          "name": "immmutableData",
+          "type": "AtomicAttribute[]"
+        },
+        {
+          "name": "mutableData",
+          "type": "AtomicAttribute[]"
+        }
+      ]
+    },
+    {
+      "name": "addconf",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "value",
+          "type": "int64"
+        }
+      ]
+    },
+    {
+      "name": "addtempldata",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "collectionName",
+          "type": "name"
+        },
+        {
+          "name": "immmutableData",
+          "type": "AtomicAttribute[]"
+        },
+        {
+          "name": "mutableData",
+          "type": "AtomicAttribute[]"
+        }
+      ]
+    },
+    {
+      "name": "createtempl",
+      "base": "",
+      "fields": [
+        {
+          "name": "from",
+          "type": "name"
+        },
+        {
+          "name": "collectionName",
+          "type": "string"
+        },
+        {
+          "name": "img",
+          "type": "string"
+        },
+        {
+          "name": "firstname",
+          "type": "string"
+        },
+        {
+          "name": "lastname",
+          "type": "string"
+        },
+        {
+          "name": "birthdate",
+          "type": "string"
+        },
+        {
+          "name": "url",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "mintasset",
+      "base": "",
+      "fields": [
+        {
+          "name": "from",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "updateclaim",
+      "base": "",
+      "fields": [
+        {
+          "name": "actor",
+          "type": "name"
+        },
+        {
+          "name": "claimedAmnt",
+          "type": "int64"
+        }
+      ]
+    },
+    {
+      "name": "updateconf",
+      "base": "",
+      "fields": [
+        {
+          "name": "key",
+          "type": "name"
+        },
+        {
+          "name": "value",
+          "type": "int64"
+        }
+      ]
+    }
+  ],
+  "types": [],
+  "actions": [
+    {
+      "name": "addconf",
+      "type": "addconf",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "addtempldata",
+      "type": "addtempldata",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "createtempl",
+      "type": "createtempl",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "mintasset",
+      "type": "mintasset",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "updateclaim",
+      "type": "updateclaim",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "updateconf",
+      "type": "updateconf",
+      "ricardian_contract": ""
+    }
+  ],
+  "tables": [
+    {
+      "name": "allowedaccs",
+      "type": "AllowedAccountsTable",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "config",
+      "type": "ConfigTable",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "items",
+      "type": "ItemsTable",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "logs",
+      "type": "LogsTable",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "templdata",
+      "type": "TemplatesTable",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    }
+  ],
+  "ricardian_clauses": [],
+  "variants": [
+    {
+      "name": "AtomicValue",
+      "types": [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float32",
+        "float64",
+        "string",
+        "int8[]",
+        "int16[]",
+        "int32[]",
+        "int64[]",
+        "bytes",
+        "uint16[]",
+        "uint32[]",
+        "uint64[]",
+        "float32[]",
+        "float64[]",
+        "string[]"
+      ]
+    }
+  ],
+  "abi_extensions": [],
+  "error_messages": []
+}

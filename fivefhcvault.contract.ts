@@ -33,15 +33,16 @@ export class fivefhcvault extends Contract {
         check(!!account, "Unknow account")
         if (!account) return;
         const widthdrawAmount:i64 = (amntPerShare*account.totalrlm)-account.claimedAmnt;
-        print(`Claimed amount ${widthdrawAmount}`);
+        check(widthdrawAmount > 0,'Withdraw is 0')
+        if (widthdrawAmount == 0) return;
         account.claimedAmnt += widthdrawAmount;
-        //this.accountTable.update(account,this.receiver);
+        
         const targetContract = Name.fromString('fivefhc');
         const updateclaim = new InlineAction<UpdateClaim>('updateclaim');
         const action = updateclaim.act(targetContract,new PermissionLevel(this.receiver))
         const actionParams = new UpdateClaim(actor,widthdrawAmount);
         action.send(actionParams);
-
+        
         sendTransferTokens(Name.fromString('fivefhcvault'),account.key,[new ExtendedAsset(new Asset(widthdrawAmount,new Symbol('XPR',4)),Name.fromString('xtokens'))],'')
         
     }

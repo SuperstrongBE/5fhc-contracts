@@ -59,9 +59,11 @@ export class fivefhc extends Contract {
 
     // TODO: Add conditionnal check for from account to filter unwanted account
 
-    if (from.toString() == 'fivefhc')return;
+    check(from.toString() != to.toString(),'Cannot transfer to self');
+    if (from.toString() == to.toString())return;
+
     //######
-    //Extract from memo eg:5FHCMINT
+    //Extract from memo eg:5FHCMINT Silent fail
     if (memo.indexOf(MintKey) == -1) return;
 
     //######
