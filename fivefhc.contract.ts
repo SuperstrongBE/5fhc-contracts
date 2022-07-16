@@ -118,10 +118,11 @@ export class fivefhc extends Contract {
     if (!splitSharePercent) return
     const additionnalSplitShare = (amount.amount * splitSharePercent.value) / 100;
 
-    const logVault = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`Will vault ${additionnalSplitShare} ${amount.symbol} to fivefhcvault`);
+    const logVault = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`${this.receiver} Will vault ${additionnalSplitShare} ${amount.symbol.toString()} to fivefhcvault`);
     this.logsTable.store(logVault,this.receiver);
-
-    sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), Name.fromString('xtokens'))], `Vaulted from ${from}`)
+    
+    
+    sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), this.firstReceiver)], `Vaulted from ${from}`)
 
     const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
     check(!!LoyaltyHWM,'Missing config LoyaltyHWM')
