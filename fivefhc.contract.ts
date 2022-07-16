@@ -313,7 +313,7 @@ export class fivefhc extends Contract {
   @action('updateclaim')
   updateclaim(actor: Name, claimedAmnt: i64): void {
 
-    requireAuth(Name.fromString('fivefhcvault'));
+    requireAuth(Name.fromString('fivefhcbank'));
     const account = this.allowedMinterTable.get(actor.N);
     check(!!account, 'Unknow account');
     if (!account) return;
