@@ -128,7 +128,7 @@
           "type": "name"
         },
         {
-          "name": "immmutableData",
+          "name": "immutableData",
           "type": "AtomicAttribute[]"
         },
         {
@@ -164,7 +164,7 @@
           "type": "name"
         },
         {
-          "name": "immmutableData",
+          "name": "immutableData",
           "type": "AtomicAttribute[]"
         },
         {
@@ -222,6 +222,11 @@
       ]
     },
     {
+      "name": "remtempldata",
+      "base": "",
+      "fields": []
+    },
+    {
       "name": "updateclaim",
       "base": "",
       "fields": [
@@ -270,6 +275,11 @@
     {
       "name": "mintasset",
       "type": "mintasset",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "remtempldata",
+      "type": "remtempldata",
       "ricardian_contract": ""
     },
     {

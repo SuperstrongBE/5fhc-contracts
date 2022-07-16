@@ -18,7 +18,7 @@ const main = async () => {
 
   const xTokensContract = blockchain.createContract('xtokens', 'node_modules/proton-tsc/external/xtokens/xtokens', true);
   //console.log (JSON.stringify(xTokensContract.actions));
-  const contract = blockchain.createContract('fivefhc', 'target/fivefhc.contract', true);
+  const contract = blockchain.createContract('fivefhcmint', 'target/fivefhcmint.contract', true);
   const vaultAccount  = blockchain.createContract('fivefhcvault', 'target/fivefhcvault.contract', true);
   const atomicContract = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets', true);
   const claimerAccount = blockchain.createAccount('remy');
@@ -68,8 +68,8 @@ const main = async () => {
     ]
   ]).send()
 
-  await atomicContract.actions.createcol(['fivefhc', CollectionName, true, ['fivefhc'], ['fivefhc'], 0.15, []]).send('fivefhc@active')
-  await atomicContract.actions.createschema(['fivefhc', CollectionName, CollectionName, [
+  await atomicContract.actions.createcol([contract.name, CollectionName, true, [contract.name], [contract.name], 0.15, []]).send(`${contract.name}@active`)
+  await atomicContract.actions.createschema([contract.name, CollectionName, CollectionName, [
     { "name": "name", "type": "string" },
     { "name": "img", "type": "ipfs" },
     { "name": "description", "type": "string" },
@@ -90,15 +90,15 @@ const main = async () => {
     { "name": "texture", "type": "string" },
     { "name": "shape", "type": "string" },
     { "name": "tip", "type": "string" }
-  ]]).send('fivefhc@active');
+  ]]).send(`${contract.name}@active`)
 
   //#################################################################################################################################
   // Core contract calls
   await wait(0);
-  await contract.actions.addconf([SplitSharePercentKey, 25]).send('fivefhc@active');
-  await contract.actions.addconf([ShareIndexKey, 0]).send('fivefhc@active');
-  await contract.actions.addconf([LoyaltyHWMKey, 0]).send('fivefhc@active');
-  await contract.actions.addconf([AvailableTemplateDataKey, 0]).send('fivefhc@active');
+  await contract.actions.addconf([SplitSharePercentKey, 25]).send(`${contract.name}@active`)
+  await contract.actions.addconf([ShareIndexKey, 0]).send(`${contract.name}@active`)
+  await contract.actions.addconf([LoyaltyHWMKey, 0]).send(`${contract.name}@active`)
+  await contract.actions.addconf([AvailableTemplateDataKey, 0]).send(`${contract.name}@active`)
 
   
   await wait(0)
@@ -108,7 +108,7 @@ const main = async () => {
 
     let td = TemplateData();
     
-    await contract.actions.addtempldata([td.name, CollectionName, td.immutable, td.mutable]).send('fivefhc@active')
+    await contract.actions.addtempldata([td.name, CollectionName, td.immutable, td.mutable]).send(`${contract.name}@active`)
     
 
   }
@@ -131,13 +131,13 @@ const main = async () => {
   //console.log(JSON.stringify(account))
 
   await wait(0);
-  await contract.actions.mintasset([claimerAccount.name.toString()]).send('fivefhc@active')  
-  await contract.actions.mintasset([claimerAccount.name.toString()]).send('fivefhc@active')  
+  await contract.actions.mintasset([claimerAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintasset([claimerAccount.name.toString()]).send(`${contract.name}@active`)
   await wait(0);
-  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
-  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
-  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')  
-  await contract.actions.mintasset([userAccount.name.toString()]).send('fivefhc@active')
+  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
 
   await wait(1000);
   const accountBefore = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
@@ -151,7 +151,7 @@ const main = async () => {
   await wait(1000);
   for(let i:number = 0 ; i<10 ; i++){
 
-    await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
+    await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send(`${vaultAccount.name}@active`)
   console.log(`##### Final result ${1} #####`)
   const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   console.log(JSON.stringify(contract.tables.config().getTableRows()))
@@ -161,7 +161,7 @@ const main = async () => {
   console.log(JSON.stringify(accountAfter))
 
   }
-  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send('fivefhcvault@active')  
+  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send(`${vaultAccount.name}@active`)
   console.log('##### Final result #####')
   const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   console.log(JSON.stringify(contract.tables.config().getTableRows()))

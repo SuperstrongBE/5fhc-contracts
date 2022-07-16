@@ -10,7 +10,7 @@ class TemplatesTable extends Table {
     constructor(
         public key:Name = new Name(),
         public collectionName:Name = new Name(),
-        public immmutableData:AtomicAttribute[] = [],
+        public immutableData:AtomicAttribute[] = [],
         public mutableData:AtomicAttribute[] = []
     ){
         super()
