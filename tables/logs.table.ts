@@ -3,10 +3,9 @@ import { Name, print, Table, TableStore } from "proton-tsc";
 @table("logs")
 class LogsTable extends Table {
     
-
     constructor(
         
-        public index:u64,
+        public key:Name = new Name() ,
         public log:string = ""
         
     ){
@@ -15,21 +14,15 @@ class LogsTable extends Table {
     @primary
     get by_index():u64{
 
-        return this.index;
+        return this.key.N;
 
     }
     
-    set by_key(value: u64){
+    set by_index(value: u64){
 
         
-        this.index = value;
+        this.key = Name.fromU64(value);
 
-    }
-
-    @secondary
-    set_log(value:string):void{
-        print(value);
-        this.log = value
     }
 
 }

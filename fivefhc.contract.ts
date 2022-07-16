@@ -11,6 +11,8 @@ export class fivefhc extends Contract {
   private configTable: TableStore<Config> = new TableStore<Config>(this.receiver);
   private allowedMinterTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(this.receiver);
   private templateDataTable: TableStore<TemplatesData> = new TableStore<TemplatesData>(this.receiver);
+  private logsTable: TableStore<Log> = new TableStore<Log>(this.receiver);
+  
 
   @action('updateconf')
   updateConfig(key: Name, value: i64): void {
@@ -23,9 +25,24 @@ export class fivefhc extends Contract {
 
   }
 
-  @action('cool')
-  cool():void {
+  @action('addlog')
+  addlog(log:string):void {
 
+    const last = this.logsTable.availablePrimaryKey
+    const logEnter = new Log(Name.fromU64(last),log);
+    this.logsTable.store(logEnter,this.receiver)
+    const lastlog = this.logsTable.get(last);
+    check(!!lastlog,'Log not saved ?')
+    if (!lastlog)return 
+    
+
+  }
+
+  @action('fuck')
+  fuck():void {
+
+    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),'Fuck action called ');
+    this.logsTable.store(logEnter,this.receiver)
     check(false,'This is fucking cool action');
 
   }
@@ -97,11 +114,17 @@ export class fivefhc extends Contract {
     if (memo.indexOf(MintKey) == -1) return;
 
     const splitSharePercent = this.configTable.get(Name.fromString(SplitSharePercentKey).N);
+    check(!!splitSharePercent,'Missing config SplitSharePercentKey')
     if (!splitSharePercent) return
     const additionnalSplitShare = (amount.amount * splitSharePercent.value) / 100;
-    //sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), Name.fromString('xtokens'))], `Vaulted from ${from}`)
+
+    const logVault = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`Will vault ${additionnalSplitShare} ${amount.symbol} to fivefhcvault`);
+    this.logsTable.store(logVault,this.receiver);
+
+    sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), Name.fromString('xtokens'))], `Vaulted from ${from}`)
 
     const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
+    check(!!LoyaltyHWM,'Missing config LoyaltyHWM')
     if (!LoyaltyHWM) return;
     LoyaltyHWM.value += additionnalSplitShare;
     this.configTable.update(LoyaltyHWM, this.receiver);
@@ -121,9 +144,11 @@ export class fivefhc extends Contract {
 
     }
 
+    
+    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`The trasnfer is ok for ${from.toString()} `);
+    this.logsTable.store(logEnter,this.receiver);
+
   }
-
-
 
   @action("createtempl")
   createTemplate(
@@ -143,10 +168,6 @@ export class fivefhc extends Contract {
     if (!allowedMinter) return;
     check(allowedMinter.allowedmint > 0, 'No mint slot')
     if (allowedMinter.allowedmint == 0) return;
-
-
-    const log2 = new Log(new Name().N);
-    log2.set_log(`Create new item ${firstname} ${lastname}`);
 
     const immutableData: AtomicAttribute[] = [
       new AtomicAttribute('name', AtomicValue.new<string>(`${firstname} ${lastname}`)),
@@ -175,7 +196,8 @@ export class fivefhc extends Contract {
   mintnft(from: Name): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
-
+    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),'Enter mintNFT');
+    this.logsTable.store(logEnter,this.receiver)
     check(!!allowedMinter, 'No Allowed minter');
     if (!allowedMinter) return;
     check(allowedMinter.allowedmint > 0, 'Allowed mint reached');
@@ -191,7 +213,8 @@ export class fivefhc extends Contract {
     if (!schema) return;
     const immutabes = pickedData.immutableData;
     immutabes.unshift(new AtomicAttribute('ogowner', AtomicValue.new<string>(from.toString())))
-
+    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`set ogonwer to immutableData as form field ${from.toString()}`);
+    this.logsTable.store(logOg,this.receiver)
 
     sendCreateTemplate(
       this.receiver,
@@ -221,6 +244,8 @@ export class fivefhc extends Contract {
     immutableTemplateData: AtomicAttribute[],
   ): void {
 
+    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`enter the logmint`);
+    this.logsTable.store(logEnter,this.receiver)
     const tdataidIndex = findIndexOfAttribute(immutableData, 'tdataid')
     check(tdataidIndex != -1, "Can't reach the tdataid")
     const templateDataKey = immutableData[tdataidIndex].value.get<u64>();
@@ -234,9 +259,14 @@ export class fivefhc extends Contract {
     check(ogOwnerIndex != -1, "Can't find the ogowner")
     const ogOwner = immutableData[ogOwnerIndex].value.get<string>();
 
+    
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
-    //check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in logmint`);
-    //check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in logmint`);
+
+    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`get the passed og from immutable data as ${ogOwner} in logmint`);
+    this.logsTable.store(logOg,this.receiver)
+
+    check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in logmint`);
+    check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in logmint`);
     if (!allowedMinter) return;
     allowedMinter.totalrlm += 1;
     this.allowedMinterTable.update(allowedMinter, this.receiver);
@@ -253,6 +283,8 @@ export class fivefhc extends Contract {
   @action('lognewtempl', notify)
   logNewTempl(templateId: i32, creator: Name, collection: Name, schema: Name, transferable: boolean, burnable: boolean, maxSupply: u32, immutableData: AtomicAttribute[]): void {
 
+    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`enter the lognewtempl`);
+    this.logsTable.store(logEnter,this.receiver)
     const ogOwnerIndex = findIndexOfAttribute(immutableData, 'ogowner')
     check(ogOwnerIndex != -1, "Can't find the ogowner")
     const ogOwner = immutableData[ogOwnerIndex].value.get<string>();
@@ -267,6 +299,8 @@ export class fivefhc extends Contract {
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
     //check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in lognewtemp`);
     //check(!!allowedMinter, 'OG Owner ${ogOwner} is not an allowed minter in lognewtempl');
+    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey),`get the passed og from immutable data as ${ogOwner} in lognewtempl`);
+    this.logsTable.store(logOg,this.receiver)
     if (!allowedMinter) return;
     sendMintAsset(this.receiver, this.receiver, collection, schema, templateId, Name.fromString(ogOwner), immutableData, templateData.mutableData, []);
 

@@ -37,7 +37,7 @@ export class fivefhcvault extends Contract {
         if (widthdrawAmount == 0) return;
         account.claimedAmnt += widthdrawAmount;
         
-        const targetContract = Name.fromString('fivefhc');
+        const targetContract = Name.fromString('fivefhcshit');
         const updateclaim = new InlineAction<UpdateClaim>('updateclaim');
         const action = updateclaim.act(targetContract,new PermissionLevel(this.receiver))
         const actionParams = new UpdateClaim(actor,widthdrawAmount);

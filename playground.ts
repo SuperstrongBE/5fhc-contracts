@@ -55,7 +55,7 @@ const main = async () => {
       { "name": "birthdate", "type": "string" },
       { "name": "jobtitle", "type": "string" },
       { "name": "company", "type": "string" },
-      //TRAITS
+      
       { "name": "skincolor", "type": "string" },
       { "name": "mouth", "type": "string" },
       { "name": "eyes", "type": "string" },
@@ -72,7 +72,9 @@ const main = async () => {
   await atomicContract.actions.createschema([contract.name, CollectionName, CollectionName, [
     { "name": "name", "type": "string" },
     { "name": "img", "type": "ipfs" },
+    { "name": "image", "type": "ipfs" },
     { "name": "description", "type": "string" },
+    { "name": "desc", "type": "string" },
     { "name": "url", "type": "string" },
     { "name": "rlmultiplier", "type": "uint32" },
     { "name": "ogowner", "type": "string" },
@@ -80,7 +82,6 @@ const main = async () => {
     { "name": "birthdate", "type": "string" },
     { "name": "jobtitle", "type": "string" },
     { "name": "company", "type": "string" },
-    //TRAITS
     { "name": "skincolor", "type": "string" },
     { "name": "mouth", "type": "string" },
     { "name": "eyes", "type": "string" },

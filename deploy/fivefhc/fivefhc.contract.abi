@@ -106,8 +106,8 @@
       "base": "",
       "fields": [
         {
-          "name": "index",
-          "type": "uint64"
+          "name": "key",
+          "type": "name"
         },
         {
           "name": "log",
@@ -152,6 +152,16 @@
       ]
     },
     {
+      "name": "addlog",
+      "base": "",
+      "fields": [
+        {
+          "name": "log",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "addtempldata",
       "base": "",
       "fields": [
@@ -172,11 +182,6 @@
           "type": "AtomicAttribute[]"
         }
       ]
-    },
-    {
-      "name": "cool",
-      "base": "",
-      "fields": []
     },
     {
       "name": "createtempl",
@@ -215,6 +220,11 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "fuck",
+      "base": "",
+      "fields": []
     },
     {
       "name": "mintnft",
@@ -268,18 +278,23 @@
       "ricardian_contract": ""
     },
     {
+      "name": "addlog",
+      "type": "addlog",
+      "ricardian_contract": ""
+    },
+    {
       "name": "addtempldata",
       "type": "addtempldata",
       "ricardian_contract": ""
     },
     {
-      "name": "cool",
-      "type": "cool",
+      "name": "createtempl",
+      "type": "createtempl",
       "ricardian_contract": ""
     },
     {
-      "name": "createtempl",
-      "type": "createtempl",
+      "name": "fuck",
+      "type": "fuck",
       "ricardian_contract": ""
     },
     {

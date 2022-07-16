@@ -1,5 +1,5 @@
-export const CollectionName = 'collection12';
-export const SchemaName = 'collection12';
+export const CollectionName = 'fivefhcshits';
+export const SchemaName = 'fivefhcshits';
 export const SplitSharePercentKey = 'gsplitshare';
 export const ShareIndexKey = 'gshareindex';
 export const LoyaltyHWMKey = 'gloyaltyhwm';
