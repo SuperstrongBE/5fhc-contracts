@@ -18,7 +18,7 @@ const main = async () => {
 
   const xTokensContract = blockchain.createContract('xtokens', 'node_modules/proton-tsc/external/xtokens/xtokens', true);
   //console.log (JSON.stringify(xTokensContract.actions));
-  const contract = blockchain.createContract('fivefhcmint', 'target/fivefhcmint.contract', true);
+  const contract = blockchain.createContract('fivefhc', 'target/fivefhc.contract', true);
   const vaultAccount  = blockchain.createContract('fivefhcvault', 'target/fivefhcvault.contract', true);
   const atomicContract = blockchain.createContract('atomicassets', 'node_modules/proton-tsc/external/atomicassets/atomicassets', true);
   const claimerAccount = blockchain.createAccount('remy');
@@ -131,13 +131,13 @@ const main = async () => {
   //console.log(JSON.stringify(account))
 
   await wait(0);
-  await contract.actions.mintasset([claimerAccount.name.toString()]).send(`${contract.name}@active`)
-  await contract.actions.mintasset([claimerAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([claimerAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([claimerAccount.name.toString()]).send(`${contract.name}@active`)
   await wait(0);
-  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
-  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
-  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
-  await contract.actions.mintasset([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([userAccount.name.toString()]).send(`${contract.name}@active`)
+  await contract.actions.mintnft([userAccount.name.toString()]).send(`${contract.name}@active`)
 
   await wait(1000);
   const accountBefore = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
@@ -151,7 +151,7 @@ const main = async () => {
   await wait(1000);
   for(let i:number = 0 ; i<10 ; i++){
 
-    await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send(`${vaultAccount.name}@active`)
+  await vaultAccount.actions.claimincome([claimerAccount.name.toString()]).send(`${vaultAccount.name}@active`)
   console.log(`##### Final result ${1} #####`)
   const accountAfter = getAccount(xTokensContract,vaultAccount.name.toString(),'XPR');
   console.log(JSON.stringify(contract.tables.config().getTableRows()))

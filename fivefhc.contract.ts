@@ -6,7 +6,7 @@ import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey, AvailableT
 import { Config, AllowedAccounts, Log, TemplatesData } from './tables';
 
 @contract
-export class fivefhcmint extends Contract {
+export class fivefhc extends Contract {
 
   private configTable: TableStore<Config> = new TableStore<Config>(this.receiver);
   private allowedMinterTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(this.receiver);
@@ -20,6 +20,13 @@ export class fivefhcmint extends Contract {
       value
     )
     this.configTable.update(config, this.receiver);
+
+  }
+
+  @action('cool')
+  cool():void {
+
+    check(false,'This is fucking cool action');
 
   }
 
@@ -92,7 +99,7 @@ export class fivefhcmint extends Contract {
     const splitSharePercent = this.configTable.get(Name.fromString(SplitSharePercentKey).N);
     if (!splitSharePercent) return
     const additionnalSplitShare = (amount.amount * splitSharePercent.value) / 100;
-    sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), Name.fromString('xtokens'))], `Vaulted from ${from}`)
+    //sendTransferTokens(this.receiver, Name.fromString('fivefhcvault'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), Name.fromString('xtokens'))], `Vaulted from ${from}`)
 
     const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
     if (!LoyaltyHWM) return;
@@ -131,7 +138,7 @@ export class fivefhcmint extends Contract {
   ): void {
 
     const allowedMinter = this.allowedMinterTable.get(from.N);
-  
+
     check(!!allowedMinter, 'Not an allowed user')
     if (!allowedMinter) return;
     check(allowedMinter.allowedmint > 0, 'No mint slot')
@@ -164,8 +171,8 @@ export class fivefhcmint extends Contract {
 
   }
 
-  @action("mintasset")
-  mintAsset(from: Name): void {
+  @action("mintnft")
+  mintnft(from: Name): void {
 
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
 
@@ -228,7 +235,8 @@ export class fivefhcmint extends Contract {
     const ogOwner = immutableData[ogOwnerIndex].value.get<string>();
 
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
-    check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in logmint`);
+    //check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in logmint`);
+    //check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in logmint`);
     if (!allowedMinter) return;
     allowedMinter.totalrlm += 1;
     this.allowedMinterTable.update(allowedMinter, this.receiver);
@@ -257,7 +265,8 @@ export class fivefhcmint extends Contract {
     if (!templateData) return;
 
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
-    check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in lognewtempl`);
+    //check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in lognewtemp`);
+    //check(!!allowedMinter, 'OG Owner ${ogOwner} is not an allowed minter in lognewtempl');
     if (!allowedMinter) return;
     sendMintAsset(this.receiver, this.receiver, collection, schema, templateId, Name.fromString(ogOwner), immutableData, templateData.mutableData, []);
 

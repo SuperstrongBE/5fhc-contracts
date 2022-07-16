@@ -9,8 +9,8 @@ import { UpdateClaim } from "./fivefhc.inline";
 @contract
 export class fivefhcvault extends Contract {
 
-    private accountTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(Name.fromString('fivefhcmint'));
-    private configTable: TableStore<Config> = new TableStore<Config>(Name.fromString('fivefhcmint'));
+    private accountTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(Name.fromString('fivefhc'));
+    private configTable: TableStore<Config> = new TableStore<Config>(Name.fromString('fivefhc'));
     
     @action('claimincome')
     claimincome(actor: Name):void {
@@ -37,7 +37,7 @@ export class fivefhcvault extends Contract {
         if (widthdrawAmount == 0) return;
         account.claimedAmnt += widthdrawAmount;
         
-        const targetContract = Name.fromString('fivefhcmint');
+        const targetContract = Name.fromString('fivefhc');
         const updateclaim = new InlineAction<UpdateClaim>('updateclaim');
         const action = updateclaim.act(targetContract,new PermissionLevel(this.receiver))
         const actionParams = new UpdateClaim(actor,widthdrawAmount);

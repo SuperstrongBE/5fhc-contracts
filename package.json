@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npx proton-asc fivefhcmint.contract.ts && npx proton-asc fivefhcvault.contract.ts",
+    "build": "npx proton-asc fivefhc.contract.ts && npx proton-asc fivefhcvault.contract.ts ",
     "build:vault": "npx proton-asc fivefhcvault.contract.ts ",
     "playground": "npm run build && LOG_LEVEL=debug npx ts-node ./playground.ts",
     "playground:nodebug": "npm run build && npx ts-node ./playground.ts"
