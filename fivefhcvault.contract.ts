@@ -9,8 +9,8 @@ import { UpdateClaim } from "./fivefhc.inline";
 @contract
 export class fivefhcvault extends Contract {
 
-    private accountTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(Name.fromString('fivefhc'));
-    private configTable: TableStore<Config> = new TableStore<Config>(Name.fromString('fivefhc'));
+    private accountTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(Name.fromString('fivefhcshit'));
+    private configTable: TableStore<Config> = new TableStore<Config>(Name.fromString('fivefhcshit'));
 
     @action('claimincome')
     claimincome(actor: Name): void {
@@ -38,7 +38,7 @@ export class fivefhcvault extends Contract {
         const actionParams = new UpdateClaim(actor, widthdrawAmount);
         action.send(actionParams);
         print('Ok actiion was sent!')
-        //sendTransferTokens(Name.fromString('fivefhcvault'), account.key, [new ExtendedAsset(new Asset(widthdrawAmount, new Symbol('XPR', 4)), this.firstReceiver)], '')
+        sendTransferTokens(Name.fromString('fivefhcvault'), account.key, [new ExtendedAsset(new Asset(widthdrawAmount, new Symbol('XPR', 4)), this.firstReceiver)], '')
 
     }
 
