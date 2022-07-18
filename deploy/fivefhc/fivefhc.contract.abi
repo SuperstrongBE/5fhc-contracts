@@ -237,23 +237,14 @@
       ]
     },
     {
-      "name": "remtempldata",
+      "name": "remallacc",
       "base": "",
       "fields": []
     },
     {
-      "name": "updateclaim",
+      "name": "remtempldata",
       "base": "",
-      "fields": [
-        {
-          "name": "actor",
-          "type": "name"
-        },
-        {
-          "name": "claimedAmnt",
-          "type": "int64"
-        }
-      ]
+      "fields": []
     },
     {
       "name": "updateconf",
@@ -266,6 +257,16 @@
         {
           "name": "value",
           "type": "int64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "base": "",
+      "fields": [
+        {
+          "name": "actor",
+          "type": "name"
         }
       ]
     }
@@ -303,18 +304,23 @@
       "ricardian_contract": ""
     },
     {
+      "name": "remallacc",
+      "type": "remallacc",
+      "ricardian_contract": ""
+    },
+    {
       "name": "remtempldata",
       "type": "remtempldata",
       "ricardian_contract": ""
     },
     {
-      "name": "updateclaim",
-      "type": "updateclaim",
+      "name": "updateconf",
+      "type": "updateconf",
       "ricardian_contract": ""
     },
     {
-      "name": "updateconf",
-      "type": "updateconf",
+      "name": "withdraw",
+      "type": "withdraw",
       "ricardian_contract": ""
     }
   ],
