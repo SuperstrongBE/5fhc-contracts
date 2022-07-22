@@ -152,16 +152,6 @@
       ]
     },
     {
-      "name": "addlog",
-      "base": "",
-      "fields": [
-        {
-          "name": "log",
-          "type": "string"
-        }
-      ]
-    },
-    {
       "name": "addtempldata",
       "base": "",
       "fields": [
@@ -180,6 +170,20 @@
         {
           "name": "mutableData",
           "type": "AtomicAttribute[]"
+        }
+      ]
+    },
+    {
+      "name": "buypresale",
+      "base": "",
+      "fields": [
+        {
+          "name": "from",
+          "type": "name"
+        },
+        {
+          "name": "amount",
+          "type": "asset"
         }
       ]
     },
@@ -222,11 +226,6 @@
       ]
     },
     {
-      "name": "fuck",
-      "base": "",
-      "fields": []
-    },
-    {
       "name": "mintnft",
       "base": "",
       "fields": [
@@ -245,6 +244,20 @@
       "name": "remtempldata",
       "base": "",
       "fields": []
+    },
+    {
+      "name": "upallmint",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "allowedmint",
+          "type": "uint32"
+        }
+      ]
     },
     {
       "name": "updateconf",
@@ -279,23 +292,18 @@
       "ricardian_contract": ""
     },
     {
-      "name": "addlog",
-      "type": "addlog",
-      "ricardian_contract": ""
-    },
-    {
       "name": "addtempldata",
       "type": "addtempldata",
       "ricardian_contract": ""
     },
     {
-      "name": "createtempl",
-      "type": "createtempl",
+      "name": "buypresale",
+      "type": "buypresale",
       "ricardian_contract": ""
     },
     {
-      "name": "fuck",
-      "type": "fuck",
+      "name": "createtempl",
+      "type": "createtempl",
       "ricardian_contract": ""
     },
     {
@@ -311,6 +319,11 @@
     {
       "name": "remtempldata",
       "type": "remtempldata",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "upallmint",
+      "type": "upallmint",
       "ricardian_contract": ""
     },
     {

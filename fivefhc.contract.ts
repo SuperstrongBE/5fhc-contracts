@@ -1,10 +1,11 @@
-import { ActWithdraw } from './actwithdraw.inline';
 import { Asset, Name, TableStore, print, Contract, check, ExtendedAsset, requireAuth, InlineAction, PermissionLevel, Symbol } from 'proton-tsc';
 import { sendMintAsset, sendCreateTemplate, AtomicAttribute, Schemas, Templates, findIndexOfAttribute } from "proton-tsc/atomicassets"
 import { AtomicValue } from 'proton-tsc/atomicassets/atomicdata';
 import { sendTransferTokens } from 'proton-tsc/token';
-import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey, AvailableTemplateDataKey } from './fivefhc.constant';
+import { ShareIndexKey, SplitSharePercentKey, MintKey, LoyaltyHWMKey, AvailableTemplateDataKey, PresaleKey, AvailablePresalesDataKey } from './fivefhc.constant';
 import { Config, AllowedAccounts, Log, TemplatesData } from './tables';
+import { Mint, ActWithdraw } from './inlines';
+import { BuyPresale } from './inlines/buypresale.inline';
 
 @contract
 export class fivefhc extends Contract {
@@ -13,7 +14,6 @@ export class fivefhc extends Contract {
   private allowedMinterTable: TableStore<AllowedAccounts> = new TableStore<AllowedAccounts>(this.receiver);
   private templateDataTable: TableStore<TemplatesData> = new TableStore<TemplatesData>(this.receiver);
   private logsTable: TableStore<Log> = new TableStore<Log>(this.receiver);
-
 
   @action('updateconf')
   updateConfig(key: Name, value: i64): void {
@@ -38,7 +38,6 @@ export class fivefhc extends Contract {
     this.configTable.store(config, this.receiver);
 
   }
-
 
   @action("remtempldata")
   remTemplateData(): void {
@@ -84,8 +83,6 @@ export class fivefhc extends Contract {
 
     }
 
-
-
   }
 
   @action('remallacc')
@@ -97,6 +94,17 @@ export class fivefhc extends Contract {
     if (!removableAcc) return;
     this.allowedMinterTable.remove(removableAcc);
 
+  }
+  
+  @action('upallmint')
+  updateallacc(account:Name,allowedmint:u32): void {
+
+    requireAuth(this.receiver);
+    const updatableAcc = this.allowedMinterTable.get(account.N);
+    check(!!updatableAcc, 'Not account to update');
+    if (!updatableAcc) return;
+    updatableAcc.allowedmint = allowedmint;
+    this.allowedMinterTable.update(updatableAcc,this.receiver);
 
   }
 
@@ -105,44 +113,23 @@ export class fivefhc extends Contract {
 
     check(from.toString() != to.toString(), 'Cannot transfer to self');
     if (from.toString() == to.toString()) return;
+    if (memo.indexOf(MintKey) == -1 && memo.indexOf(PresaleKey) == -1) { return };
+    const targetContract = this.receiver;
+    //Apply presale process anyway
 
-    if (memo.indexOf(MintKey) == -1) return;
+    const buyPresaleAction = new InlineAction<BuyPresale>('buypresale');
+    const buyPresaleAct = buyPresaleAction.act(targetContract, new PermissionLevel(this.receiver))
+    const buyPresaleParams = new BuyPresale(from,amount);
+    buyPresaleAct.send(buyPresaleParams);
 
-    const splitSharePercent = this.configTable.get(Name.fromString(SplitSharePercentKey).N);
-    check(!!splitSharePercent, 'Missing config SplitSharePercentKey')
-    if (!splitSharePercent) return
-    const additionnalSplitShare = (amount.amount * splitSharePercent.value) / 100;
+    if (memo.indexOf(MintKey) >= 0) {
 
-    const logVault = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `${this.receiver} Will vault ${additionnalSplitShare} ${amount.symbol.toString()} to fivefhcbank`);
-    this.logsTable.store(logVault, this.receiver);
-
-
-    sendTransferTokens(this.receiver, Name.fromString('fivefhcbank'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), this.firstReceiver)], `Vaulted from ${from}`)
-
-    const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
-    check(!!LoyaltyHWM, 'Missing config LoyaltyHWM')
-    if (!LoyaltyHWM) return;
-    LoyaltyHWM.value += additionnalSplitShare;
-    this.configTable.update(LoyaltyHWM, this.receiver);
-
-    const allowedMinter = this.allowedMinterTable.get(from.N)
-
-    if (!allowedMinter) {
-
-      const newAllowedMinter = new AllowedAccounts(from, 1, 0);
-      newAllowedMinter.by_key = from.N;
-      this.allowedMinterTable.store(newAllowedMinter, this.receiver);
-
-    } else {
-
-      allowedMinter.allowedmint += 1;
-      this.allowedMinterTable.update(allowedMinter, this.receiver);
+      const actWithdrawAction = new InlineAction<Mint>('mintnft');
+      const actWithdrawAct = actWithdrawAction.act(targetContract, new PermissionLevel(this.receiver))
+      const actWithdrawParams = new Mint(from);
+      actWithdrawAct.send(actWithdrawParams);
 
     }
-
-
-    const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `The trasnfer is ok for ${from.toString()} `);
-    this.logsTable.store(logEnter, this.receiver);
 
   }
 
@@ -191,7 +178,6 @@ export class fivefhc extends Contract {
   @action("mintnft")
   mintnft(from: Name): void {
 
-    
     const allowedMinter = this.allowedMinterTable.lowerBound(from.N);
     const logEnter = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), 'Enter mintNFT');
     this.logsTable.store(logEnter, this.receiver)
@@ -210,8 +196,6 @@ export class fivefhc extends Contract {
     if (!schema) return;
     const immutabes = pickedData.immutableData;
     immutabes.unshift(new AtomicAttribute('ogowner', AtomicValue.new<string>(from.toString())))
-    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `set ogonwer to immutableData as form field ${from.toString()}`);
-    this.logsTable.store(logOg, this.receiver)
 
     sendCreateTemplate(
       this.receiver,
@@ -259,8 +243,6 @@ export class fivefhc extends Contract {
 
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
 
-    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `get the passed og from immutable data as ${ogOwner} in logmint`);
-    this.logsTable.store(logOg, this.receiver)
 
     check(!!allowedMinter, `This fucking Owner ${ogOwner} is not an allowed minter in logmint`);
     check(!!allowedMinter, `OG Owner ${ogOwner} is not an allowed minter in logmint`);
@@ -275,7 +257,6 @@ export class fivefhc extends Contract {
     this.configTable.update(shareIndex, this.receiver)
 
   }
-
 
   @action('lognewtempl', notify)
   logNewTempl(templateId: i32, creator: Name, collection: Name, schema: Name, transferable: boolean, burnable: boolean, maxSupply: u32, immutableData: AtomicAttribute[]): void {
@@ -295,8 +276,7 @@ export class fivefhc extends Contract {
 
     const allowedMinter = this.allowedMinterTable.get(Name.fromString(ogOwner).N);
     check(!!allowedMinter, 'OG Owner ${ogOwner} is not an allowed minter in lognewtempl');
-    const logOg = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `get the passed og from immutable data as ${ogOwner} in lognewtempl`);
-    this.logsTable.store(logOg, this.receiver)
+    
     if (!allowedMinter) return;
     sendMintAsset(this.receiver, this.receiver, collection, schema, templateId, Name.fromString(ogOwner), immutableData, templateData.mutableData, []);
 
@@ -308,6 +288,7 @@ export class fivefhc extends Contract {
   @action('withdraw')
   withdraw(actor: Name): void {
 
+    
     const account = this.allowedMinterTable.get(actor.N);
     check(!!account, 'Unknow account');
     if (!account) return;
@@ -321,23 +302,64 @@ export class fivefhc extends Contract {
 
     const amntPerShare: i64 = loyaltyHWM.value / totalShares.value
 
-    const widthdrawAmount: i64 = (amntPerShare * account.totalrlm) - account.claimedAmnt;
+    const widthdrawAmount: i64 = (amntPerShare * (account.totalrlm + account.allowedmint)) - account.claimedAmnt;
     check(widthdrawAmount > 0, 'Withdraw is 0')
     if (widthdrawAmount == 0) return;
     account.claimedAmnt += widthdrawAmount;
 
-    
+
     const targetContract = Name.fromString('fivefhcbank');
     const actwithdraw = new InlineAction<ActWithdraw>('actwithdraw');
     const action = actwithdraw.act(targetContract, new PermissionLevel(this.receiver))
-    const actionParams = new ActWithdraw(account.key, new Asset(widthdrawAmount,new Symbol('XPR',4)),Name.fromString('eosio.token'));
+    const actionParams = new ActWithdraw(account.key, new Asset(widthdrawAmount, new Symbol('XPR', 4)), Name.fromString('eosio.token'));
     action.send(actionParams);
-    
+
     const log = new Log(Name.fromU64(this.logsTable.availablePrimaryKey), `${account.key.toString()} will receive ${widthdrawAmount.toString()} from fivefhcshit`);
     this.logsTable.store(log, this.receiver)
     this.allowedMinterTable.update(account, this.receiver);
 
   }
 
+  @action('buypresale')
+  buypresale(from: Name, amount: Asset): void {
+
+    const isEmptyTemplate = this.templateDataTable.isEmpty();
+    //ok add a check for templates
+    const availablePresale = this.configTable.get(Name.fromString(AvailablePresalesDataKey).N);
+    check(!!availablePresale, 'Missing config AvailablePresalesKey')
+    if (!availablePresale) return;
+    check(availablePresale.value>0 || !isEmptyTemplate, 'No available presale for now...')
+
+    const splitSharePercent = this.configTable.get(Name.fromString(SplitSharePercentKey).N);
+    check(!!splitSharePercent, 'Missing config SplitSharePercentKey')
+    if (!splitSharePercent) return
+    const additionnalSplitShare = (amount.amount * splitSharePercent.value) / 100;
+
+    const allowedMinter = this.allowedMinterTable.get(from.N)
+    if (!allowedMinter) {
+
+      const newAllowedMinter = new AllowedAccounts(from, 1, 0);
+      newAllowedMinter.by_key = from.N;
+      this.allowedMinterTable.store(newAllowedMinter, this.receiver);
+
+    } else {
+
+      allowedMinter.allowedmint += 1;
+      this.allowedMinterTable.update(allowedMinter, this.receiver);
+
+    }
+
+    const LoyaltyHWM = this.configTable.get(Name.fromString(LoyaltyHWMKey).N);
+    check(!!LoyaltyHWM, 'Missing config LoyaltyHWM')
+    if (!LoyaltyHWM) return;
+    LoyaltyHWM.value += additionnalSplitShare;
+    this.configTable.update(LoyaltyHWM, this.receiver);
+
+    availablePresale.value -=1;
+    this.configTable.update(availablePresale,this.receiver);
+
+    sendTransferTokens(this.receiver, Name.fromString('fivefhcbank'), [new ExtendedAsset(new Asset(additionnalSplitShare, amount.symbol), this.firstReceiver)], `Vaulted from ${from}`)
+
+  }
 };
 

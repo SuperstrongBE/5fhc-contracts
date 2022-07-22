@@ -30,5 +30,12 @@
     "public": "PUB_K1_5fXoJ6qqMjEvYqAtAcCTHFnsRk4pySaLy9nR31h9WuqKq1DVLu",
     "private": "PVT_K1_8ZUrgDuJh5BTaBN2VHTEzz1MX3hzTma7aq4SVhYrv1T3MqoaN",
     "mnemonic": "opera travel peanut sentence all office erase refuse nut tumble range kidney"
+  },
+  {
+    "label":"fivefhcbank",
+      "public": "PUB_K1_6Wv2BBECYAWoZyk9KbBJ7Xas5hsLCiLxqM6KCy6ZY7ZRjWWiPC",
+      "private": "PVT_K1_2M8RhRFU6by64zREMci3xDtDWXUwf4GjwY48kp2h1WyVwNCdp5",
+      "mnemonic": "flat gift cruel tail click twist foster ankle bus submit better vault"
+    
   }
 ]
